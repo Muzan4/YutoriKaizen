@@ -1,0 +1,30 @@
+# Gradle
+.gradle/
+build/
+**/build/
+
+# Local configuration
+local.properties
+
+# Logs and outputs
+*.log
+captures/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IntelliJ/Android Studio
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Keystores and Secrets
+*.jks
+*.keystore
+*.pk8
+*.pem
+google-services.json
+
