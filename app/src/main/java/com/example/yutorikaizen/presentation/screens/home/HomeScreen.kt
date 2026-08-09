@@ -1,57 +1,133 @@
 package com.example.yutorikaizen.presentation.screens.home
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.yutorikaizen.domain.model.DuckState
-import com.example.yutorikaizen.presentation.components.DuckSprite
-import com.example.yutorikaizen.presentation.theme.DeepNight
-import com.example.yutorikaizen.presentation.theme.MoonGray
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.yutorikaizen.presentation.theme.*
+import kotlin.math.roundToInt
 
 /**
- * Home screen placeholder — Phase 0.
- *
- * Shows the duck in CONTENT state so the Canvas animation is visible
- * immediately. The full HomeScreen (Deliverable 6) is wired in Phase 3.
+ * Home is the frog's world — minimal UI, maximum frog visibility.
+ * Only a floating greeting chip at the top and a soft action cluster
+ * at the bottom. Everything else is transparent so the Godot frog shines.
  */
 @Composable
-fun HomeScreen() {
-    Column(
+fun HomeScreen(
+    viewModel: HomeViewModel = hiltViewModel(),
+    onStartFocusSession: () -> Unit = {},
+    onDuckBreak: () -> Unit = {}
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(DeepNight)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
     ) {
-        DuckSprite(
-            duckState = DuckState.CONTENT,
-            size      = 140.dp
-        )
+        // ── Top greeting chip ──────────────────────────────────────────────
+        Surface(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 48.dp, start = 24.dp, end = 24.dp),
+            color  = CozyBlack.copy(alpha = 0.72f),
+            shape  = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+            tonalElevation = 0.dp
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text("🐸", fontSize = 18.sp)
+                Text(
+                    text  = uiState.greeting,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = CreamWhite,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
 
-        Spacer(Modifier.height(24.dp))
+        // ── Score badge ────────────────────────────────────────────────────
+        Surface(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 112.dp, end = 24.dp),
+            color = CozyBlack.copy(alpha = 0.72f),
+            shape = androidx.compose.foundation.shape.CircleShape
+        ) {
+            Column(
+                modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text  = "${(uiState.consistencyScore * 100).roundToInt()}%",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MossGreen,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text  = "streak",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = WarmCream.copy(alpha = 0.6f)
+                )
+            }
+        }
 
-        Text(
-            text  = "Yutori Kaizen",
-            style = MaterialTheme.typography.headlineLarge
-        )
+        // ── Bottom action cluster ──────────────────────────────────────────
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 24.dp, start = 24.dp, end = 24.dp)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Button(
+                onClick  = onStartFocusSession,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp),
+                shape  = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MossGreen,
+                    contentColor   = CozyBlack
+                ),
+                elevation = ButtonDefaults.buttonElevation(4.dp)
+            ) {
+                Text(
+                    text       = "▶  Start Focus",
+                    style      = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.5.sp
+                )
+            }
 
-        Spacer(Modifier.height(8.dp))
-
-        Text(
-            text  = "Your focus companion is ready 🌙",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MoonGray
-        )
+            OutlinedButton(
+                onClick  = onDuckBreak,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp),
+                shape  = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
+                border = androidx.compose.foundation.BorderStroke(1.5.dp, WarmCream.copy(alpha = 0.3f)),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = CozyBlack.copy(alpha = 0.55f),
+                    contentColor   = WarmCream
+                )
+            ) {
+                Text(
+                    text  = "🐸  Frog Break",
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+        }
     }
 }

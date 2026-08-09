@@ -46,6 +46,9 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
 }
 
 dependencies {
+    // Godot Engine Library (v3.4)
+    implementation(files("libs/godot-lib.3.4.stable.release.aar"))
+
     // Desugaring — enables java.time on minSdk 25
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 

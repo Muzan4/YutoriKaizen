@@ -17,37 +17,37 @@ import androidx.compose.ui.graphics.Color
 //   background    = DeepNight   — root scaffold background
 //   surface       = NightSurface — cards, bottom nav, sheets
 //   error         = WarmMiss    — NEVER red — warm amber for missed/warning states
-private val MidnightPondScheme = darkColorScheme(
-    primary               = CalmTeal,
-    onPrimary             = DeepNight,          // dark text on teal button
-    primaryContainer      = TealContainer,
-    onPrimaryContainer    = CalmTeal,
-    secondary             = DuckAmber,
-    onSecondary           = DeepNight,
+private val CozyMidnightScheme = darkColorScheme(
+    primary               = MossGreen,
+    onPrimary             = CozyBlack,
+    primaryContainer      = MossGreenDim,
+    onPrimaryContainer    = MossGreen,
+    secondary             = CozyAmber,
+    onSecondary           = CozyBlack,
     secondaryContainer    = AmberContainer,
-    onSecondaryContainer  = DuckAmberLight,
-    background            = DeepNight,
-    onBackground          = StarWhite,
-    surface               = NightSurface,
-    onSurface             = StarWhite,
-    surfaceVariant        = NightCard,
-    onSurfaceVariant      = MoonGray,
-    outline               = NightBorder,
-    outlineVariant        = NightHighlight,
-    error                 = WarmMiss,           // warm amber — never red
-    onError               = DeepNight,
+    onSecondaryContainer  = CozyAmber,
+    background            = CozyBlack,
+    onBackground          = CreamWhite,
+    surface               = CozyBlack3,
+    onSurface             = CreamWhite,
+    surfaceVariant        = CozyBlack4,
+    onSurfaceVariant      = SoftTan,
+    outline               = CozyBorder,
+    outlineVariant        = CozyBlack4,
+    error                 = WarmWarn,
+    onError               = CozyBlack,
     errorContainer        = WarmMissContainer,
-    onErrorContainer      = DuckAmberLight,
-    inverseSurface        = StarWhite,
-    inverseOnSurface      = DeepNight,
-    inversePrimary        = CalmTealDim,
-    scrim                 = Color(0xCC14111E)    // 80% DeepNight — modal backdrop
+    onErrorContainer      = CozyAmber,
+    inverseSurface        = CreamWhite,
+    inverseOnSurface      = CozyBlack,
+    inversePrimary        = MossGreenDark,
+    scrim                 = Color(0xCC0D0D0D)
 )
 
 @Composable
 fun YutoriKaizenTheme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = MidnightPondScheme,
+        colorScheme = CozyMidnightScheme,
         typography  = AppTypography,
         content     = content
     )

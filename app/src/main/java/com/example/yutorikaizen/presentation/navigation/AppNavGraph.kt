@@ -17,20 +17,19 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.yutorikaizen.presentation.screens.duckbreak.DuckBreakScreen
+import com.example.yutorikaizen.presentation.screens.duckbreak.FrogBreakScreen
 import com.example.yutorikaizen.presentation.screens.focus.FocusTimerScreen
 import com.example.yutorikaizen.presentation.screens.home.HomeScreen
 import com.example.yutorikaizen.presentation.screens.log.TriggerLogScreen
 import com.example.yutorikaizen.presentation.screens.tasks.TaskScreen
-import com.example.yutorikaizen.presentation.theme.CalmTeal
-import com.example.yutorikaizen.presentation.theme.MoonGray
-import com.example.yutorikaizen.presentation.theme.NightSurface
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.ui.unit.dp
+import com.example.yutorikaizen.presentation.theme.*
 
 /**
  * App-level navigation graph.
@@ -51,6 +50,7 @@ fun AppNavGraph() {
     val navController = rememberNavController()
 
     Scaffold(
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
         bottomBar = {
             YutoriBottomNav(
                 currentRoute = navController
@@ -75,12 +75,18 @@ fun AppNavGraph() {
             startDestination = NavRoute.Home.route,
             modifier         = Modifier.padding(innerPadding)
         ) {
-            composable(NavRoute.Home.route)      { HomeScreen() }
+            composable(NavRoute.Home.route) {
+                HomeScreen(
+                    onStartFocusSession = { navController.navigate(NavRoute.Focus.route) },
+                    onDuckBreak         = { navController.navigate(NavRoute.FrogBreak.route) }
+                )
+            }
             composable(NavRoute.Focus.route)     { FocusTimerScreen() }
             composable(NavRoute.Log.route)       { TriggerLogScreen() }
-            composable(NavRoute.DuckBreak.route) { DuckBreakScreen() }
+            composable(NavRoute.FrogBreak.route) { FrogBreakScreen() }
             composable(NavRoute.Tasks.route)     { TaskScreen() }
         }
+
     }
 }
 
@@ -92,7 +98,7 @@ sealed class NavRoute(val route: String, val label: String, val icon: ImageVecto
     object Home      : NavRoute("home",      "Home",  Icons.Rounded.Home)
     object Focus     : NavRoute("focus",     "Focus", Icons.Rounded.PlayArrow)
     object Log       : NavRoute("log",       "Log",   Icons.Rounded.Edit)
-    object DuckBreak : NavRoute("duckbreak", "Break", Icons.Rounded.Favorite)
+    object FrogBreak : NavRoute("frogbreak", "Break", Icons.Rounded.Favorite)
     object Tasks     : NavRoute("tasks",     "Tasks", Icons.Rounded.CheckCircle)
 }
 
@@ -100,7 +106,7 @@ private val bottomNavItems = listOf(
     NavRoute.Home,
     NavRoute.Focus,
     NavRoute.Log,
-    NavRoute.DuckBreak,
+    NavRoute.FrogBreak,
     NavRoute.Tasks
 )
 
@@ -110,7 +116,8 @@ private fun YutoriBottomNav(
     onNavigate: (String) -> Unit
 ) {
     NavigationBar(
-        containerColor = NightSurface
+        containerColor = CozyBlack3,
+        tonalElevation = 0.dp
     ) {
         bottomNavItems.forEach { screen ->
             val selected = currentRoute?.hierarchy?.any { it.route == screen.route } == true
@@ -121,15 +128,15 @@ private fun YutoriBottomNav(
                         contentDescription = screen.label
                     )
                 },
-                label   = { Text(screen.label) },
-                selected = selected,
-                onClick  = { onNavigate(screen.route) },
-                colors  = NavigationBarItemDefaults.colors(
-                    selectedIconColor   = CalmTeal,
-                    selectedTextColor   = CalmTeal,
-                    unselectedIconColor = MoonGray,
-                    unselectedTextColor = MoonGray,
-                    indicatorColor      = NightSurface
+                label    = { Text(screen.label, fontWeight = if (selected) androidx.compose.ui.text.font.FontWeight.SemiBold else androidx.compose.ui.text.font.FontWeight.Normal) },
+                selected  = selected,
+                onClick   = { onNavigate(screen.route) },
+                colors   = NavigationBarItemDefaults.colors(
+                    selectedIconColor   = MossGreen,
+                    selectedTextColor   = MossGreen,
+                    unselectedIconColor = SoftTan,
+                    unselectedTextColor = SoftTan,
+                    indicatorColor      = MossGreenDim
                 )
             )
         }

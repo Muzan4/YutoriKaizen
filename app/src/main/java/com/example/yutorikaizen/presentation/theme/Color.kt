@@ -3,58 +3,69 @@ package com.example.yutorikaizen.presentation.theme
 import androidx.compose.ui.graphics.Color
 
 // ==========================================================
-// THEME: "Calm Midnight Pond"
-// Philosophy: warm-tinted dark (never cold), one glowing teal
-// accent that reads like still water, duck amber for warmth.
+// THEME: "Cozy Midnight Frog Pond"
+// Philosophy: deep matte blacks as the base, warm earthy
+// accents (moss green, warm cream) for a cozy cottage feel.
+// Never cold, never clinical.
 // ==========================================================
 
-// === Backgrounds ===
-val DeepNight      = Color(0xFF14111E)   // Main background — warm purple-black, not cold
-val NightSurface   = Color(0xFF1D1929)   // Bottom nav, bottom sheets, nav bar
-val NightCard      = Color(0xFF26233A)   // Cards, elevated surfaces
-val NightBorder    = Color(0xFF332F45)   // Subtle dividers, outlines
-val NightHighlight = Color(0xFF3A3555)   // Pressed/selected chip, hover state
+// === Core Blacks ===
+val CozyBlack      = Color(0xFF0D0D0D)   // True matte black — base background
+val CozyBlack2     = Color(0xFF141414)   // Slightly lifted surface
+val CozyBlack3     = Color(0xFF1C1C1C)   // Cards, nav bar
+val CozyBlack4     = Color(0xFF242424)   // Elevated cards, modals
+val CozyBorder     = Color(0xFF2E2E2E)   // Subtle dividers, outlines
 
-// === Primary — Calm Teal ===
-// WHY teal, not green? Pure green reads as clinical/productivity-app.
-// This #4ECDC4 sits between aqua and teal — it evokes calm water at night,
-// not a traffic light or a stock chart.
-val CalmTeal       = Color(0xFF4ECDC4)   // Primary buttons, active states, ring end
-val CalmTealDim    = Color(0xFF2A8C85)   // Pressed state, darker teal
-val TealContainer  = Color(0xFF0F3835)   // Button container background (dark teal tint)
-val TealGlow       = Color(0x334ECDC4)   // 20% teal glow for soft halos
+// === Warm Creams & Tans ===
+val WarmCream      = Color(0xFFE8DCC8)   // Primary text — warm parchment, not pure white
+val CreamWhite     = Color(0xFFF2EBD9)   // Bright text, headings
+val SoftTan        = Color(0xFFB8A898)   // Secondary text, captions
+val DimTan         = Color(0xFF6E5E50)   // Disabled, placeholder
 
-// === Secondary — Duck Amber ===
-// The duck is the only warm thing on screen. Amber against deep purple
-// creates a cozy campfire-at-night contrast — intentional and distinctive.
-val DuckAmber      = Color(0xFFE8A830)   // Duck body, Duck Break button, highlights
-val DuckAmberDim   = Color(0xFFC4861C)   // Pressed amber, darker variant
-val DuckAmberLight = Color(0xFFF5C842)   // Bright accent, selected state
-val AmberContainer = Color(0xFF3D2A00)   // Amber button container background
-val AmberGlow      = Color(0x33E8A830)   // 20% amber glow
-val DuckAmberDark  = DuckAmberDim        // Alias for Canvas drawing code
+// === Accent: Moss Green ===
+// Why moss green? It matches the frog without being neon.
+// Earthy, cozy, reminiscent of forest ponds at dusk.
+val MossGreen      = Color(0xFF7CB47A)   // Primary accent — buttons, active icons
+val MossGreenDark  = Color(0xFF4F7A4D)   // Pressed state, darker variant
+val MossGreenDim   = Color(0xFF1E3D1C)   // Container background, chip selected
+val MossGlow       = Color(0x337CB47A)   // 20% glow for breathing circles
 
-// === Consistency Ring Gradient ===
-// Low score → purple (gentle, not alarming), High score → teal (calm achievement)
-val RingPurple     = Color(0xFFA78BFA)   // Ring start color (low score end)
-val RingTeal       = Color(0xFF4ECDC4)   // Ring end color (high score end)
-val RingTrack      = Color(0xFF2A263F)   // Empty ring track background
+// === Accent: Warm Amber (secondary) ===
+val CozyAmber      = Color(0xFFD4956A)   // Warm accent for highlights, frog break
+val CozyAmberDim   = Color(0xFF8C5A35)   // Pressed amber
+val CozyAmberGlow  = Color(0x33D4956A)   // 20% amber glow
 
-// === Text ===
-// "Star White" has a very slight lavender tint (#EDE9F8) so it blends
-// with the purple backgrounds instead of clashing like pure white would.
-val StarWhite      = Color(0xFFEDE9F8)   // Primary text
-val MoonGray       = Color(0xFF9B96AD)   // Secondary text, captions, hints
-val DuskFaint      = Color(0xFF5C5870)   // Disabled, placeholder
+// === Semantic ===
+val SoftSage       = Color(0xFF9DC49A)   // Completed / success — gentle, not harsh green
+val WarmWarn       = Color(0xFFD4956A)   // Warning — amber, never red
 
-// === Semantic — warm alternatives to red/green ===
-val SoftMint       = Color(0xFF5BE5A0)   // Completed session/task — mint green, not harsh
-val WarmMiss       = Color(0xFFC4861C)   // Missed day — amber, never red
-val WarmMissContainer = Color(0xFF2E1E00) // Missed day chip background
-
-// Aliases so that other files (Canvas code, legacy refs) keep compiling
-val InkBrown       = StarWhite
-val InkLight       = MoonGray
-val SageGreen      = CalmTeal
-val SageGreenLight = RingTrack
-val SageGreenDark  = CalmTealDim
+// === Legacy aliases (keep other files from breaking) ===
+val DeepNight      = CozyBlack
+val NightSurface   = CozyBlack3
+val NightCard      = CozyBlack4
+val NightBorder    = CozyBorder
+val NightHighlight = CozyBlack4
+val CalmTeal       = MossGreen
+val CalmTealDim    = MossGreenDark
+val TealContainer  = MossGreenDim
+val TealGlow       = MossGlow
+val DuckAmber      = CozyAmber
+val DuckAmberDim   = CozyAmberDim
+val DuckAmberLight = CozyAmber
+val AmberContainer = Color(0xFF2A1A0A)
+val AmberGlow      = CozyAmberGlow
+val DuckAmberDark  = CozyAmberDim
+val RingPurple     = MossGreen
+val RingTeal       = SoftSage
+val RingTrack      = CozyBlack3
+val StarWhite      = CreamWhite
+val MoonGray       = SoftTan
+val DuskFaint      = DimTan
+val SoftMint       = SoftSage
+val WarmMiss       = WarmWarn
+val WarmMissContainer = Color(0xFF2A1400)
+val InkBrown       = CreamWhite
+val InkLight       = SoftTan
+val SageGreen      = MossGreen
+val SageGreenLight = MossGreenDim
+val SageGreenDark  = MossGreenDark
