@@ -15,7 +15,7 @@ export default function Hero({ driveUrl }) {
         <span className="w-2 h-2 rounded-full bg-moss-vibrant animate-pulse shrink-0" />
         <span className="font-mono text-moss-light">v1.0 Ready</span>
         <span className="text-white/20 hidden xs:inline">•</span>
-        <span className="font-serif italic text-parchment-100 truncate">ゆとり改善 • Engineered Spaciousness</span>
+        <span className="font-serif italic text-parchment-100 truncate">ゆとり改善 • Room to Breathe in a Busy World</span>
       </div>
 
       {/* Main Title powered by React Bits TechText */}
