@@ -9,8 +9,8 @@ import DownloadSection from './components/DownloadSection';
 import Footer from './components/Footer';
 import icRibiHeadImg from './assets/ic_ribi_head.png';
 
-// Replace this with your actual Google Drive public download link!
-export const GOOGLE_DRIVE_DOWNLOAD_URL = "https://drive.google.com/drive/folders/YOUR_DRIVE_FOLDER_OR_FILE_ID?usp=sharing";
+// Google Drive public download link for beta APK
+export const GOOGLE_DRIVE_DOWNLOAD_URL = "https://drive.google.com/file/d/1rZWZramDUcQnE_3uV-bss5N0-tQ0KaMQ/view?usp=sharing";
 
 export default function App() {
   const menuItems = [

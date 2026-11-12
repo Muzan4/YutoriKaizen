@@ -95,7 +95,7 @@ export default function FeaturesGrid() {
               Instant Shortcut From Anywhere
             </h3>
             <p className="text-xs sm:text-sm text-parchment-dim leading-relaxed">
-              A quiet, discreet companion bubble rests gently at the edge of your phone screen. 
+              A quiet, discreet cat rests gently at the edge of your phone screen looking at you all the time. 
               One tap blossoms into a circular radial menu so you can start a focus block, log an expense, or launch the Surge Bridge without digging through app drawers.
             </p>
           </div>
@@ -178,7 +178,7 @@ export default function FeaturesGrid() {
               Deep Work Blocks
             </h3>
             <p className="text-xs text-parchment-dim leading-relaxed">
-              Calm 25-minute attention intervals without noisy notifications or alarms. Ribi sits quietly beside your task until the block is done.
+              Calm attention intervals without noisy notifications or alarms. Ribi sits quietly beside your task until the block is done.
             </p>
           </div>
 
