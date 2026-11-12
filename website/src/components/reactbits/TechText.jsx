@@ -57,6 +57,8 @@ const TechText = ({
   intro = 'none',
   introDuration = 2,
   guides = false,
+  bleedX = 100,
+  bleedY = 140,
   className = '',
   style
 }) => {
@@ -92,7 +94,9 @@ const TechText = ({
       clickKick,
       intro,
       introDuration,
-      guides
+      guides,
+      bleedX,
+      bleedY
     };
     wakeRef.current();
   });
@@ -341,17 +345,21 @@ const TechText = ({
     };
 
     const blit = (target, art, dx, dy, originX, originY) => {
+      const bx = target === scratchCtx ? 0 : (settingsRef.current?.bleedX || 0);
+      const by = target === scratchCtx ? 0 : (settingsRef.current?.bleedY || 0);
       target.drawImage(
         art.image,
-        Math.round((art.left + dx) * dpr - originX),
-        Math.round((art.top + dy) * dpr - originY)
+        Math.round((art.left + dx + bx) * dpr - originX),
+        Math.round((art.top + dy + by) * dpr - originY)
       );
     };
 
     const drawReveal = s => {
+      const bx = s.bleedX || 0;
+      const by = s.bleedY || 0;
       const radius = s.reach * dpr;
-      const cx = lens.x * dpr;
-      const cy = lens.y * dpr;
+      const cx = (lens.x + bx) * dpr;
+      const cy = (lens.y + by) * dpr;
       ctx.globalCompositeOperation = 'destination-out';
       ctx.fillStyle = falloff(ctx, cx, cy, radius, presence, s.softness);
       ctx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
@@ -447,11 +455,13 @@ const TechText = ({
       const glyph = glyphs[frame.index];
       if (!glyph || frame.alpha < 0.01) return;
       const a = frame.alpha;
+      const bx = s.bleedX || 0;
+      const by = s.bleedY || 0;
       const x1 = crisp(frame.x1);
       const y1 = crisp(frame.y1);
       const x2 = crisp(frame.x2);
       const y2 = crisp(frame.y2);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.setTransform(dpr, 0, 0, dpr, bx * dpr, by * dpr);
       ctx.fillStyle = accent;
       ctx.strokeStyle = accent;
       ctx.lineWidth = 1;
@@ -493,7 +503,10 @@ const TechText = ({
 
       if (s.specks > 0) drawSpecks(s, a, accent);
 
-      if (!s.labels) return;
+      if (!s.labels) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        return;
+      }
       ctx.font = LABEL_FONT;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'bottom';
@@ -505,6 +518,7 @@ const TechText = ({
           : `${glyph.char}  ${Math.round(glyph.box.x2 - glyph.box.x1)} × ${Math.round(glyph.box.y2 - glyph.box.y1)}`;
       ctx.fillText(label, Math.round(frame.x1), Math.round(frame.y1) - 7);
       ctx.globalAlpha = 1;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
     };
 
     const drawLines = (s, view, accent, alpha, growth) => {
@@ -512,7 +526,9 @@ const TechText = ({
       const x1 = Math.round(view.left - pad);
       const x2 = Math.round(view.right + pad);
       const room = width - x2 > x1;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const bx = s.bleedX || 0;
+      const by = s.bleedY || 0;
+      ctx.setTransform(dpr, 0, 0, dpr, bx * dpr, by * dpr);
       ctx.strokeStyle = accent;
       ctx.fillStyle = accent;
       ctx.lineWidth = 1;
@@ -590,9 +606,11 @@ const TechText = ({
     };
 
     const cellRect = (x, y, size) => {
-      const left = Math.round(x * dpr);
-      const top = Math.round(y * dpr);
-      return [left, top, Math.round((x + size) * dpr) - left, Math.round((y + size) * dpr) - top];
+      const bx = settingsRef.current?.bleedX || 0;
+      const by = settingsRef.current?.bleedY || 0;
+      const left = Math.round((x + bx) * dpr);
+      const top = Math.round((y + by) * dpr);
+      return [left, top, Math.round((x + size + bx) * dpr) - left, Math.round((y + size + by) * dpr) - top];
     };
 
     const drawAssembling = (glyph, progress, accent) => {
@@ -627,9 +645,11 @@ const TechText = ({
     };
 
     const drawFilling = (glyph, lead, progress, view) => {
+      const bx = settingsRef.current?.bleedX || 0;
+      const by = settingsRef.current?.bleedY || 0;
       const art = glyph.fill;
-      const left = Math.floor(art.left * dpr);
-      const top = Math.floor(art.top * dpr);
+      const left = Math.floor((art.left + bx) * dpr);
+      const top = Math.floor((art.top + by) * dpr);
       const w = art.image.width + 2;
       const h = art.image.height + 2;
       const fill = clamp01((progress - 0.24 - 0.28 * lead) / 0.48);
@@ -638,8 +658,8 @@ const TechText = ({
         const amount = smoothstep(0.3 * band.order, 0.3 * band.order + 0.4, fill);
         if (amount <= 0) continue;
         const span = (band.y1 - band.y0) * amount;
-        const y0 = Math.round((band.up ? band.y1 - span : band.y0) * dpr);
-        const y1 = Math.round((band.up ? band.y1 : band.y0 + span) * dpr);
+        const y0 = Math.round((band.up ? band.y1 - span + by : band.y0 + by) * dpr);
+        const y1 = Math.round((band.up ? band.y1 + by : band.y0 + span + by) * dpr);
         if (y1 > y0) rects.push([y0, y1 - y0]);
       }
       const outline = smoothstep(0.08 + 0.2 * lead, 0.22 + 0.2 * lead, progress);
@@ -686,8 +706,10 @@ const TechText = ({
         width = Math.max(1, container.clientWidth);
         height = Math.max(1, container.clientHeight);
         dpr = Math.min(window.devicePixelRatio || 1, 2);
-        const pixelWidth = Math.round(width * dpr);
-        const pixelHeight = Math.round(height * dpr);
+        const bx = s.bleedX || 0;
+        const by = s.bleedY || 0;
+        const pixelWidth = Math.round((width + bx * 2) * dpr);
+        const pixelHeight = Math.round((height + by * 2) * dpr);
         if (canvas.width !== pixelWidth) canvas.width = pixelWidth;
         if (canvas.height !== pixelHeight) canvas.height = pixelHeight;
       }
@@ -990,8 +1012,29 @@ const TechText = ({
   }, []);
 
   return (
-    <div ref={containerRef} className={`tech-text ${className}`.trim()} style={style} role="img" aria-label={text}>
-      <canvas ref={canvasRef} className="tech-text-canvas" />
+    <div
+      ref={containerRef}
+      className={`tech-text ${className}`.trim()}
+      style={{
+        position: 'relative',
+        overflow: 'visible',
+        ...style
+      }}
+      role="img"
+      aria-label={text}
+    >
+      <canvas
+        ref={canvasRef}
+        className="tech-text-canvas"
+        style={{
+          position: 'absolute',
+          left: `-${bleedX}px`,
+          top: `-${bleedY}px`,
+          width: `calc(100% + ${bleedX * 2}px)`,
+          height: `calc(100% + ${bleedY * 2}px)`,
+          pointerEvents: 'none'
+        }}
+      />
     </div>
   );
 };

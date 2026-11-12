@@ -18,8 +18,8 @@ export default function Hero({ driveUrl }) {
         <span className="font-serif italic text-parchment-100 truncate">ゆとり改善 • Room to Breathe in a Busy World</span>
       </div>
 
-      {/* Main Title powered by React Bits TechText */}
-      <div className="w-full max-w-4xl h-[85px] xs:h-[105px] sm:h-[135px] md:h-[160px] lg:h-[185px] relative my-0.5 sm:my-1 flex items-center justify-center">
+      {/* Main Title powered by React Bits TechText (Unclipped overflow bleed) */}
+      <div className="w-full max-w-4xl h-[85px] xs:h-[105px] sm:h-[135px] md:h-[160px] lg:h-[185px] relative my-0.5 sm:my-1 flex items-center justify-center overflow-visible">
         <TechText
           text="Yutori Kaizen"
           fontFamily='"Fraunces", serif'
@@ -34,6 +34,8 @@ export default function Hero({ driveUrl }) {
           dashGap={2}
           clickKick={true}
           draggable={true}
+          bleedX={100}
+          bleedY={150}
           intro="assemble"
           introDuration={1.8}
         />
