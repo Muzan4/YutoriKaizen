@@ -49,8 +49,8 @@ const waitForFonts = async font => {
 
 const ParticleText = ({
   text = 'React Bits',
-  particleSize = 2,
-  density = 4,
+  particleSize = 2.6,
+  density = 2,
   color = 'currentColor',
   highlightColor = '#ff5a36',
   highlightMode = 'motion',
@@ -63,7 +63,7 @@ const ParticleText = ({
   burstStrength = 1,
   pointerRepel = 40,
   repelRadius = 120,
-  idleDrift = 0.7,
+  idleDrift = 0,
   trigger = 'mount',
   fontSize = 'clamp(3rem, 12vw, 8rem)',
   fontWeight = 800,
@@ -627,7 +627,7 @@ const ParticleText = ({
         }
       }
 
-      const maxParticles = Math.max(900, Math.min(5200, Math.floor((nextWidth * nextHeight) / 90)));
+      const maxParticles = Math.max(1500, Math.min(9500, Math.floor((nextWidth * nextHeight) / 35)));
       const stride = Math.max(1, Math.ceil(targets.length / maxParticles));
       const selected = targets.filter((_, index) => index % stride === 0);
       const intro = introPending && !reducedMotion;

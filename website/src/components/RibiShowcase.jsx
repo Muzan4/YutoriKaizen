@@ -81,12 +81,13 @@ export default function RibiShowcase() {
               highlightColor="#84A98C"
               highlightMode="motion"
               shape="circle"
-              particleSize={2.2}
-              density={3.5}
+              particleSize={2.6}
+              density={2}
+              idleDrift={0}
               intro="gather"
               clickBurst={true}
-              pointerRepel={30}
-              repelRadius={80}
+              pointerRepel={35}
+              repelRadius={90}
             />
           </div>
 
