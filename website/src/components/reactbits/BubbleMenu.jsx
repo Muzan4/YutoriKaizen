@@ -162,11 +162,15 @@ export default function BubbleMenu({
   return (
     <>
       <nav className={containerClassName} style={style} aria-label="Main navigation">
-        <div className="bubble logo-bubble border border-white/10 backdrop-blur-md" aria-label="Logo" style={{ background: menuBg }}>
-          <span className="logo-content">
-            {typeof logo === 'string' ? <img src={logo} alt="Logo" className="bubble-logo" /> : logo}
-          </span>
-        </div>
+        {logo ? (
+          <div className="bubble logo-bubble border border-white/10 backdrop-blur-md" aria-label="Logo" style={{ background: menuBg }}>
+            <span className="logo-content">
+              {typeof logo === 'string' ? <img src={logo} alt="Logo" className="bubble-logo" /> : logo}
+            </span>
+          </div>
+        ) : (
+          <div aria-hidden="true" />
+        )}
 
         <button
           type="button"

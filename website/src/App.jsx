@@ -58,21 +58,10 @@ export default function App() {
     }
   ];
 
-  const logoNode = (
-    <div className="flex items-center gap-2.5">
-      <img src={icRibiHeadImg} alt="Ribi" className="w-7 h-7 object-contain rounded-lg" />
-      <span className="font-serif font-bold text-sm tracking-tight text-parchment-100 hidden sm:inline">
-        Yutori Kaizen
-      </span>
-      <span className="font-handwriting text-xs text-moss-light hidden md:inline">ゆとり</span>
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-cozy-900 text-parchment-100 relative grain-overlay selection:bg-moss/20 selection:text-moss-vibrant">
       {/* React Bits BubbleMenu floating navigation */}
       <BubbleMenu
-        logo={logoNode}
         items={menuItems}
         menuAriaLabel="Toggle navigation"
         menuBg="#181816"
