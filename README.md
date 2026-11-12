@@ -13,11 +13,11 @@ Modern social feeds and compulsive apps are engineered by behavioral psychologis
 - **Yutori (ゆとり)**: A Japanese concept of deliberate spaciousness—giving your mind room to breathe, pause, and settle before reacting.
 - **Kaizen (改善)**: Continuous, unhurried micro-improvements. 1% daily progress instead of punitive cold turkey.
 
-Alongside you is **Ribi**, an unobtrusive companion frog that sits calmly beside your focus sessions, reminds you to do real-world physical resets, and celebrates when you ride out an urge.
+Alongside you is **Ribi**, an unobtrusive companion frog that sits calmly beside your focus sessions, reminds you to take real-world physical resets, and celebrates when you ride out an urge.
 
 ---
 
-## 📦 What's Inside
+## 📱 App Features
 
 ### 1. 🌊 The 90-Second Surge Bridge
 A standalone urge-surfing tool based on Dr. Alan Marlatt’s addiction neuroscience. When a sudden craving to doom-scroll strikes, the Surge Bridge guides you through the 90 seconds it takes for a dopamine wave to crest and subside naturally.
@@ -34,41 +34,46 @@ A thoughtful 0–100 daily score that rewards avoided impulsive opens, completed
 ### 5. 🪙 Conscious Spending Diary
 Because mindless scrolling and impulsive late-night purchasing stem from the exact same restless urge, Yutori Kaizen includes a zero-stress expense tracker with clean monthly clarity.
 
-### 6. 🌐 Official Companion Website (`/website`)
-A dedicated, responsive web showcase built with React 18, Vite, Tailwind CSS, and interactive canvas physics components from React Bits (`<TechText />`, `<ParticleText />`, `<BubbleMenu />`).
+### 6. 🌿 Screen-Free Frog Breaks
+Gentle somatic resets prompting you to rest your eyes, roll your shoulders, or hydrate.
+
+### 7. 📌 Floating Quick Dial
+An unobtrusive edge-of-screen shortcut bubble providing immediate access to focus blocks, expense logging, and the Surge Bridge from anywhere.
 
 ---
 
-## 🛠️ Project Structure
+## 🌐 Official Web Portal (`/website`)
+
+The repository includes the official website and download portal located in [`website/`](./website), hosted live via Git.
+
+- **Live Demos**: Functional 90-second Surge Bridge urge surfing simulator and interactive Ribi mascot companion preview with 11 unlockable outfits.
+- **Canvas Animations**: Built with React Bits (`<TechText />`, `<ParticleText />`, `<BubbleMenu />`) with mobile-optimized physics and responsive typography.
+- **Direct Sideload Distribution**: Direct Google Drive APK download card with clean sideloading guides.
+
+---
+
+## 📦 Architecture & Repository Structure
 
 ```text
 YutoriKaizen/
-├── app/                  # Android Native App (Jetpack Compose, Kotlin, Room, Hilt)
-│   ├── src/main/java/    # Clean Architecture (Data, Domain, Presentation)
-│   └── src/main/assets/  # Godot companion spritesheets & audio assets
-├── website/              # Official Web Landing Page (React + Vite + Tailwind)
-│   ├── src/components/   # React Bits animations, bento grid, Ribi showcase
-│   └── public/           # Lossless web assets and sprite animations
+├── app/                  # Android Native Application
+│   ├── src/main/java/    # Kotlin + Jetpack Compose + Room + Hilt Architecture
+│   │   ├── data/         # Repositories, DAOs, Database entities, Preferences
+│   │   ├── domain/       # UseCases, Domain Models, NCI Calculator
+│   │   ├── presentation/ # Screens (Home, Surge, Intercept, Habits, Expenses)
+│   │   └── service/      # App Intercept & Floating Quick Dial Services
+│   └── src/main/assets/  # Godot companion sprite frames & sound effects
+├── website/              # Official Web Portal (Hosted via Git)
+│   ├── src/components/   # React Bits canvas engines, bento grid, Ribi showcase
+│   └── public/           # Spritesheets, vector assets, and drawables
 └── README.md
 ```
 
 ---
 
-## 🚀 Running the Website
+## 📲 Sideloading the Android APK
 
-```bash
-cd website
-npm install
-npm run dev
-```
-
-Server starts at `http://localhost:3000`.
-
----
-
-## 📱 Sideloading the Android APK
-
-1. Download the latest `.apk` release.
+1. Download the latest `.apk` from the official web portal (Google Drive release).
 2. Allow installation from your browser or file manager when prompted by Android.
 3. Grant **Accessibility Service** permission (required locally on-device to intercept configured apps before they open).
 4. **100% Private**: Zero analytics, zero accounts, zero cloud servers. Everything stays on your device.
