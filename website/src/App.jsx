@@ -59,7 +59,7 @@ export default function App() {
   ];
 
   return (
-    <div className="min-h-screen bg-cozy-900 text-parchment-100 relative grain-overlay selection:bg-moss/20 selection:text-moss-vibrant">
+    <div className="min-h-screen bg-cozy-900 text-parchment-100 relative grain-overlay selection:bg-moss/20 selection:text-moss-vibrant overflow-x-hidden">
       {/* React Bits BubbleMenu floating navigation */}
       <BubbleMenu
         items={menuItems}

@@ -5,7 +5,7 @@ import { Download, Sparkles, ShieldCheck, Heart, ArrowDown } from 'lucide-react'
 
 export default function Hero({ driveUrl }) {
   return (
-    <section id="hero" className="relative pt-4 sm:pt-6 md:pt-8 pb-10 sm:pb-14 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto flex flex-col items-center text-center overflow-hidden">
+    <section id="hero" className="relative pt-4 sm:pt-6 md:pt-8 pb-10 sm:pb-14 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto flex flex-col items-center text-center overflow-visible">
       {/* Ambient background glows */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[280px] sm:w-[480px] h-[220px] sm:h-[300px] bg-moss/10 rounded-full blur-[90px] sm:blur-[130px] pointer-events-none -z-10" />
       <div className="absolute top-1/3 left-1/3 -translate-x-1/2 w-[200px] sm:w-[320px] h-[160px] sm:h-[220px] bg-surge-orange/5 rounded-full blur-[80px] sm:blur-[110px] pointer-events-none -z-10" />
@@ -34,8 +34,8 @@ export default function Hero({ driveUrl }) {
           dashGap={2}
           clickKick={true}
           draggable={true}
-          bleedX={100}
-          bleedY={150}
+          bleedX={800}
+          bleedY={700}
           intro="assemble"
           introDuration={1.8}
         />

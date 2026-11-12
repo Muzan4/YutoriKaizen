@@ -19,7 +19,7 @@ export default function DownloadSection({ driveUrl }) {
         </span>
 
         {/* ParticleText header (Active on mobile & desktop with responsive wrapping) */}
-        <div className="w-full h-[110px] xs:h-[130px] sm:h-[140px] md:h-[170px] relative flex items-center justify-center">
+        <div className="w-full h-[110px] xs:h-[130px] sm:h-[140px] md:h-[170px] relative flex items-center justify-center overflow-visible">
           <ParticleText
             text="Install Yutori Kaizen"
             fontSize="clamp(2.2rem, 5.5vw, 4.2rem)"

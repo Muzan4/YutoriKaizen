@@ -71,7 +71,7 @@ export default function RibiShowcase() {
           </div>
 
           {/* Header with ParticleText (Active on mobile & desktop) */}
-          <div className="w-full h-[100px] xs:h-[120px] sm:h-[140px] md:h-[160px] relative flex items-center justify-center">
+          <div className="w-full h-[100px] xs:h-[120px] sm:h-[140px] md:h-[160px] relative flex items-center justify-center overflow-visible">
             <ParticleText
               text="Meet Ribi"
               fontSize="clamp(2.4rem, 5.5vw, 4.4rem)"

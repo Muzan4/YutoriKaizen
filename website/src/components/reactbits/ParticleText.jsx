@@ -69,7 +69,9 @@ const ParticleText = ({
   fontSize = 'clamp(3rem, 12vw, 8rem)',
   fontWeight = 800,
   fontFamily = 'inherit',
-  glow = true,
+  glow = false,
+  bleedX = 100,
+  bleedY = 160,
   className = '',
   style
 }) => {
@@ -101,7 +103,9 @@ const ParticleText = ({
       fontSize,
       fontWeight,
       fontFamily,
-      glow
+      glow,
+      bleedX,
+      bleedY
     };
     wakeRef.current();
   });
@@ -488,10 +492,12 @@ const ParticleText = ({
       if (isBurstingOut && complete) isBurstingOut = false;
       if (bursting && !settling) bursting = false;
 
+      const bx = s.bleedX || 0;
+      const by = s.bleedY || 0;
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.globalAlpha = 1;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.setTransform(dpr, 0, 0, dpr, bx * dpr, by * dpr);
 
       const strokeWidth = Math.max(1, sizeBase * 0.65);
       if (lines) {
@@ -502,7 +508,7 @@ const ParticleText = ({
       if (s.glow) {
         layerCtx.setTransform(1, 0, 0, 1, 0, 0);
         layerCtx.clearRect(0, 0, layer.width, layer.height);
-        layerCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        layerCtx.setTransform(dpr, 0, 0, dpr, bx * dpr, by * dpr);
         layerCtx.fillStyle = glowColor;
         layerCtx.strokeStyle = glowColor;
         layerCtx.lineWidth = strokeWidth;
@@ -519,11 +525,13 @@ const ParticleText = ({
         }
         layerCtx.globalAlpha = 1;
         if (lit) {
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
           ctx.shadowColor = glowColor;
           ctx.shadowBlur = (3 + sizeBase * 1.5) * dpr;
-          ctx.drawImage(layer, 0, 0, width, height);
+          ctx.drawImage(layer, 0, 0);
           ctx.shadowBlur = 0;
           ctx.shadowColor = 'transparent';
+          ctx.setTransform(dpr, 0, 0, dpr, bx * dpr, by * dpr);
         }
       }
 
@@ -675,8 +683,10 @@ const ParticleText = ({
       width = nextWidth;
       height = nextHeight;
       dpr = nextDpr;
-      canvas.width = Math.max(1, Math.floor(width * dpr));
-      canvas.height = Math.max(1, Math.floor(height * dpr));
+      const bx = s.bleedX || 0;
+      const by = s.bleedY || 0;
+      canvas.width = Math.max(1, Math.floor((width + bx * 2) * dpr));
+      canvas.height = Math.max(1, Math.floor((height + by * 2) * dpr));
       layer.width = canvas.width;
       layer.height = canvas.height;
 
@@ -759,7 +769,7 @@ const ParticleText = ({
     }
 
     const locate = event => {
-      const rect = canvas.getBoundingClientRect();
+      const rect = container.getBoundingClientRect();
       pointer.x = event.clientX - rect.left;
       pointer.y = event.clientY - rect.top;
     };
@@ -787,7 +797,7 @@ const ParticleText = ({
     const handlePointerDown = event => {
       const s = settingsRef.current;
       if (!s || s.trigger === 'click' || !s.clickBurst || reducedMotion) return;
-      const rect = canvas.getBoundingClientRect();
+      const rect = container.getBoundingClientRect();
       burst(event.clientX - rect.left, event.clientY - rect.top);
     };
 
@@ -813,11 +823,11 @@ const ParticleText = ({
     };
 
     motionQuery?.addEventListener?.('change', handleReduceMotionChange);
-    canvas.addEventListener('pointerenter', handlePointerEnter);
-    canvas.addEventListener('pointermove', handlePointerMove);
-    canvas.addEventListener('pointerleave', handlePointerLeave);
-    canvas.addEventListener('pointerdown', handlePointerDown);
-    canvas.addEventListener('click', handleClick);
+    container.addEventListener('pointerenter', handlePointerEnter);
+    container.addEventListener('pointermove', handlePointerMove);
+    container.addEventListener('pointerleave', handlePointerLeave);
+    container.addEventListener('pointerdown', handlePointerDown);
+    container.addEventListener('click', handleClick);
 
     const resizeObserver = new ResizeObserver(() => {
       if (sizeKey() !== requestedSize) queueSample(false);
@@ -880,19 +890,35 @@ const ParticleText = ({
       themeObserver.disconnect();
       schemeQuery?.removeEventListener?.('change', wake);
       motionQuery?.removeEventListener?.('change', handleReduceMotionChange);
-      canvas.removeEventListener('pointerenter', handlePointerEnter);
-      canvas.removeEventListener('pointermove', handlePointerMove);
-      canvas.removeEventListener('pointerleave', handlePointerLeave);
-      canvas.removeEventListener('pointerdown', handlePointerDown);
-      canvas.removeEventListener('click', handleClick);
+      container.removeEventListener('pointerenter', handlePointerEnter);
+      container.removeEventListener('pointermove', handlePointerMove);
+      container.removeEventListener('pointerleave', handlePointerLeave);
+      container.removeEventListener('pointerdown', handlePointerDown);
+      container.removeEventListener('click', handleClick);
       if (raf) cancelAnimationFrame(raf);
       if (sampleFrame) cancelAnimationFrame(sampleFrame);
     };
   }, []);
 
   return (
-    <div ref={containerRef} className={`particle-text ${className}`.trim()} style={style}>
-      <canvas ref={canvasRef} className="particle-text__canvas" aria-hidden="true" />
+    <div
+      ref={containerRef}
+      className={`particle-text ${className}`.trim()}
+      style={{ position: 'relative', overflow: 'visible', ...style }}
+    >
+      <canvas
+        ref={canvasRef}
+        className="particle-text__canvas"
+        style={{
+          position: 'absolute',
+          left: `-${bleedX}px`,
+          top: `-${bleedY}px`,
+          width: `calc(100% + ${bleedX * 2}px)`,
+          height: `calc(100% + ${bleedY * 2}px)`,
+          pointerEvents: 'none'
+        }}
+        aria-hidden="true"
+      />
       <span className="particle-text__sr">{text}</span>
     </div>
   );

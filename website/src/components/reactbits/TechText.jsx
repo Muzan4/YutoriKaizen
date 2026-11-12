@@ -57,8 +57,8 @@ const TechText = ({
   intro = 'none',
   introDuration = 2,
   guides = false,
-  bleedX = 100,
-  bleedY = 140,
+  bleedX = 800,
+  bleedY = 700,
   className = '',
   style
 }) => {
