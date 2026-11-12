@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 data class TriggerLogEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val timestamp: Long,
-    val emotion: String,    // "BORED" | "TIRED" | "ANXIOUS" | "LONELY" | "AVOIDING"
-    val note: String?
+    val emotion: String,       // "BORED" | "TIRED" | "ANXIOUS" | "LONELY" | "AVOIDING"
+    val note: String?,
+    val actionTaken: String = "YIELDED"  // "YIELDED" | "SURGE_USED" | "REPLACED"
 )

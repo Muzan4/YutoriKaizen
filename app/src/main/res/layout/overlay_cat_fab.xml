@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  overlay_cat_fab.xml — Floating Cat Overlay View
+  Uses the Fact app's cat animation (scroll.json), rotated 90/270deg to peek from screen edges.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="80dp"
+    android:layout_height="80dp">
+
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/cat_lottie"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_gravity="center"
+        app:lottie_rawRes="@raw/scroll"
+        app:lottie_loop="false"
+        app:lottie_autoPlay="false" />
+
+</FrameLayout>

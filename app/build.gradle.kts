@@ -63,6 +63,9 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material)
+    implementation(libs.aandroidx.compose.material.icons.extended)
+    implementation(libs.androidx.compose.google.fonts)
 
     // Navigation
     implementation(libs.nav.compose)
@@ -88,6 +91,13 @@ dependencies {
 
     // DataStore
     implementation(libs.datastore.prefs)
+
+    // Lottie (cat overlay animations)
+    implementation(libs.lottie)
+    implementation(libs.lottie.compose)
+
+    // AppCompat (for ContextThemeWrapper in overlay service)
+    implementation(libs.androidx.appcompat)
 
     // Debug
     debugImplementation(libs.androidx.compose.ui.tooling)

@@ -4,99 +4,174 @@ import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.unit.sp
+import com.example.yutorikaizen.R
 
-// ==========================================================
-// FONTS — Phase 0 uses system fonts so the app builds immediately.
+// ─── Font families ─────────────────────────────────────────────────────────────
 //
-// To upgrade to real fonts (Phase 1+):
-//  1. Download from Google Fonts:
-//     - Nunito (Regular, SemiBold, Bold) → res/font/nunito_*.ttf
-//     - Press Start 2P (Regular)         → res/font/press_start_2p.ttf
-//  2. Uncomment the FontFamily declarations below and comment
-//     out the Default aliases.
-//  3. Re-run assembleDebug — no other files need to change.
-// ==========================================================
+//  DM Sans  — Geometric sans-serif. Warm, human, never clinical.
+//             Body text, buttons, labels, UI chrome.
+//
+//  Fraunces — Variable optical serif with real character.
+//             For titles and numbers that need soul. Feels handcrafted.
 
-// --- Uncomment after adding font files to res/font/ ---
-// val NunitoFamily = FontFamily(
-//     Font(R.font.nunito_regular, FontWeight.Normal),
-//     Font(R.font.nunito_semibold, FontWeight.SemiBold),
-//     Font(R.font.nunito_bold, FontWeight.Bold)
-// )
-// val PressStart2PFamily = FontFamily(
-//     Font(R.font.press_start_2p, FontWeight.Normal)
-// )
+val DmSans = FontFamily(
+    Font(R.font.dm_sans, FontWeight.Normal),
+    Font(R.font.dm_sans, FontWeight.Medium),
+    Font(R.font.dm_sans, FontWeight.SemiBold),
+    Font(R.font.dm_sans, FontWeight.Bold),
+)
 
-// Phase 0 placeholders — system sans-serif
-val NunitoFamily       = FontFamily.Default
-val PressStart2PFamily = FontFamily.Monospace   // closest system font vibe for now
+val Fraunces = FontFamily(
+    Font(R.font.fraunces, FontWeight.Normal),
+    Font(R.font.fraunces, FontWeight.Medium),
+    Font(R.font.fraunces, FontWeight.SemiBold),
+    Font(R.font.fraunces, FontWeight.Bold),
+)
 
-// WHY: We use Nunito for all body/UI text because its rounded letterforms match
-// the cozy aesthetic without sacrificing readability. Press Start 2P is only for
-// the duck's speech bubble tips, score numbers, and phase headers — sparingly.
-// On dark backgrounds: default text color is StarWhite (lavender-tinted off-white).
+/**
+ * Caveat — handwriting style. Use for:
+ *  • Greetings ("Good morning")
+ *  • Phase names on the journey screen
+ *  • The surge bridge headline
+ *  • Any single line that needs to feel personal, not product-y
+ *
+ * Do NOT use for paragraphs, labels, or anything below 20sp.
+ */
+val Caveat = FontFamily(
+    Font(R.font.caveat, FontWeight.Normal),
+    Font(R.font.caveat, FontWeight.SemiBold),
+    Font(R.font.caveat, FontWeight.Bold),
+)
+
+// Keep old aliases so nothing else breaks
+val NunitoFamily       = DmSans
+val PressStart2PFamily = Fraunces
+
+
+// ─── Typography scale ──────────────────────────────────────────────────────────
 val AppTypography = Typography(
-    // Display: duck speech bubble headers, score numbers (pixel font)
+
+    // Big titles — Fraunces gives real presence
     displayLarge = TextStyle(
-        fontFamily = PressStart2PFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 24.sp,
-        lineHeight = 32.sp,
-        color = StarWhite
+        fontFamily    = Fraunces,
+        fontWeight    = FontWeight.Bold,
+        fontSize      = 40.sp,
+        lineHeight    = 46.sp,
+        letterSpacing = (-0.5).sp,
+        color         = StarWhite
     ),
     displayMedium = TextStyle(
-        fontFamily = PressStart2PFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        color = StarWhite
+        fontFamily    = Fraunces,
+        fontWeight    = FontWeight.SemiBold,
+        fontSize      = 32.sp,
+        lineHeight    = 38.sp,
+        letterSpacing = (-0.3).sp,
+        color         = StarWhite
     ),
-    // Headings: screen titles
+
+    // Screen headings
     headlineLarge = TextStyle(
-        fontFamily = NunitoFamily,
-        fontWeight = FontWeight.Bold,
-        fontSize = 28.sp,
-        lineHeight = 36.sp,
-        color = StarWhite
+        fontFamily    = Fraunces,
+        fontWeight    = FontWeight.Bold,
+        fontSize      = 26.sp,
+        lineHeight    = 32.sp,
+        letterSpacing = (-0.2).sp,
+        color         = StarWhite
     ),
     headlineMedium = TextStyle(
-        fontFamily = NunitoFamily,
-        fontWeight = FontWeight.Bold,
-        fontSize = 22.sp,
-        lineHeight = 30.sp,
-        color = StarWhite
+        fontFamily    = Fraunces,
+        fontWeight    = FontWeight.SemiBold,
+        fontSize      = 21.sp,
+        lineHeight    = 27.sp,
+        letterSpacing = (-0.1).sp,
+        color         = StarWhite
     ),
-    // Body: all reading text
+    headlineSmall = TextStyle(
+        fontFamily    = DmSans,
+        fontWeight    = FontWeight.Bold,
+        fontSize      = 18.sp,
+        lineHeight    = 24.sp,
+        letterSpacing = 0.sp,
+        color         = StarWhite
+    ),
+
+    // Card and section titles
+    titleLarge = TextStyle(
+        fontFamily    = Fraunces,
+        fontWeight    = FontWeight.SemiBold,
+        fontSize      = 17.sp,
+        lineHeight    = 23.sp,
+        letterSpacing = 0.sp,
+        color         = StarWhite
+    ),
+    titleMedium = TextStyle(
+        fontFamily    = Fraunces,
+        fontWeight    = FontWeight.SemiBold,
+        fontSize      = 15.sp,
+        lineHeight    = 21.sp,
+        letterSpacing = 0.sp,
+        color         = StarWhite
+    ),
+    titleSmall = TextStyle(
+        fontFamily    = Fraunces,
+        fontWeight    = FontWeight.Medium,
+        fontSize      = 13.sp,
+        lineHeight    = 18.sp,
+        letterSpacing = 0.sp,
+        color         = StarWhite
+    ),
+
+    // Reading text
     bodyLarge = TextStyle(
-        fontFamily = NunitoFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        color = StarWhite
+        fontFamily    = DmSans,
+        fontWeight    = FontWeight.Normal,
+        fontSize      = 16.sp,
+        lineHeight    = 25.sp,
+        letterSpacing = 0.sp,
+        color         = StarWhite
     ),
     bodyMedium = TextStyle(
-        fontFamily = NunitoFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-        color = MoonGray
+        fontFamily    = DmSans,
+        fontWeight    = FontWeight.Normal,
+        fontSize      = 14.sp,
+        lineHeight    = 22.sp,
+        letterSpacing = 0.sp,
+        color         = MoonGray
     ),
-    // Labels: buttons, chips, nav
+    bodySmall = TextStyle(
+        fontFamily    = DmSans,
+        fontWeight    = FontWeight.Normal,
+        fontSize      = 12.sp,
+        lineHeight    = 18.sp,
+        letterSpacing = 0.sp,
+        color         = MoonGray
+    ),
+
+    // Buttons, chips, nav labels
     labelLarge = TextStyle(
-        fontFamily = NunitoFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 15.sp,
-        lineHeight = 20.sp,
-        letterSpacing = 0.1.sp,
-        color = StarWhite
+        fontFamily    = DmSans,
+        fontWeight    = FontWeight.SemiBold,
+        fontSize      = 15.sp,
+        lineHeight    = 20.sp,
+        letterSpacing = 0.sp,
+        color         = StarWhite
+    ),
+    labelMedium = TextStyle(
+        fontFamily    = DmSans,
+        fontWeight    = FontWeight.Medium,
+        fontSize      = 13.sp,
+        lineHeight    = 18.sp,
+        letterSpacing = 0.sp,
+        color         = StarWhite
     ),
     labelSmall = TextStyle(
-        fontFamily = NunitoFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 11.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.5.sp,
-        color = MoonGray
+        fontFamily    = DmSans,
+        fontWeight    = FontWeight.Medium,
+        fontSize      = 11.sp,
+        lineHeight    = 15.sp,
+        letterSpacing = 0.3.sp,
+        color         = MoonGray
     )
 )

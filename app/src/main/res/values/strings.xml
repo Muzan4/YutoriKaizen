@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Yutori Kaizen</string>
+    <string name="accessibility_service_description">Yutori Kaizen watches which app you open and shows a brief pause screen with your personal message before it opens. This helps break impulsive scrolling habits. No screen content is ever read.</string>
 </resources>

@@ -1,44 +1,48 @@
 package com.example.yutorikaizen.di
 
-import com.example.yutorikaizen.data.repository.FocusSessionRepositoryImpl
-import com.example.yutorikaizen.data.repository.TaskRepositoryImpl
-import com.example.yutorikaizen.data.repository.TriggerLogRepositoryImpl
-import com.example.yutorikaizen.domain.repository.FocusSessionRepository
-import com.example.yutorikaizen.domain.repository.TaskRepository
-import com.example.yutorikaizen.domain.repository.TriggerLogRepository
+import com.example.yutorikaizen.data.repository.*
+import com.example.yutorikaizen.data.repository.InterceptConfigRepositoryImpl
+import com.example.yutorikaizen.domain.repository.*
+import com.example.yutorikaizen.domain.repository.InterceptConfigRepository
+import com.example.yutorikaizen.data.repository.HabitRepositoryImpl
+import com.example.yutorikaizen.domain.repository.HabitRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-/**
- * Tells Hilt how to satisfy repository interface injection requests.
- *
- * WHY @Binds instead of @Provides?
- * @Binds is used when you're just linking an interface to its implementation —
- * there's no construction logic. It's more efficient than @Provides because
- * Hilt doesn't need to generate a wrapper method body.
- */
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
 
-    @Binds
-    @Singleton
-    abstract fun bindFocusSessionRepository(
-        impl: FocusSessionRepositoryImpl
-    ): FocusSessionRepository
+    @Binds @Singleton
+    abstract fun bindFocusSessionRepository(impl: FocusSessionRepositoryImpl): FocusSessionRepository
 
-    @Binds
-    @Singleton
-    abstract fun bindTriggerLogRepository(
-        impl: TriggerLogRepositoryImpl
-    ): TriggerLogRepository
+    @Binds @Singleton
+    abstract fun bindTriggerLogRepository(impl: TriggerLogRepositoryImpl): TriggerLogRepository
 
-    @Binds
-    @Singleton
-    abstract fun bindTaskRepository(
-        impl: TaskRepositoryImpl
-    ): TaskRepository
+    @Binds @Singleton
+    abstract fun bindTaskRepository(impl: TaskRepositoryImpl): TaskRepository
+
+    @Binds @Singleton
+    abstract fun bindUserProfileRepository(impl: UserProfileRepositoryImpl): UserProfileRepository
+
+    @Binds @Singleton
+    abstract fun bindSurgeEventRepository(impl: SurgeEventRepositoryImpl): SurgeEventRepository
+
+    @Binds @Singleton
+    abstract fun bindDailyCheckInRepository(impl: DailyCheckInRepositoryImpl): DailyCheckInRepository
+
+    @Binds @Singleton
+    abstract fun bindAppUsageRepository(impl: AppUsageRepositoryImpl): AppUsageRepository
+
+    @Binds @Singleton
+    abstract fun bindInterceptConfigRepository(impl: InterceptConfigRepositoryImpl): InterceptConfigRepository
+
+    @Binds @Singleton
+    abstract fun bindExpenseRepository(impl: ExpenseRepositoryImpl): ExpenseRepository
+
+    @Binds @Singleton
+    abstract fun bindHabitRepository(impl: HabitRepositoryImpl): HabitRepository
 }

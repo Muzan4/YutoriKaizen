@@ -69,3 +69,20 @@ val InkLight       = SoftTan
 val SageGreen      = MossGreen
 val SageGreenLight = MossGreenDim
 val SageGreenDark  = MossGreenDark
+
+// === Surge / Urge Button ===
+val SurgeRed       = Color(0xFFE05C3A)   // Warm tomato-red — urgency without harsh cold red
+val SurgeRedDim    = Color(0xFF3A1A0F)   // Container for surge button area
+val SurgeRedGlow   = Color(0x44E05C3A)   // 27% glow
+
+// === Phase Colors ===
+val Phase1Green    = Color(0xFF7CB47A)   // Phase 1: Awareness (moss green)
+val Phase2Blue     = Color(0xFF5BA4CF)   // Phase 2: Friction Gates (calm blue)
+val Phase3Amber    = Color(0xFFD4956A)   // Phase 3: Habit Stacking (warm amber)
+val Phase4Purple   = Color(0xFF9C7FD4)   // Phase 4: Stabilization (soft violet)
+
+// === NCI Score Gradient ===
+val NciLow         = Color(0xFFE05C3A)   // 0–40%
+val NciMid         = Color(0xFFD4956A)   // 40–70%
+val NciHigh        = Color(0xFF7CB47A)   // 70–100%
+

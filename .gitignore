@@ -28,3 +28,8 @@ out/
 *.pem
 google-services.json
 
+
+# Website Node & Build artifacts
+website/node_modules/
+website/dist/
+build_errors.txt

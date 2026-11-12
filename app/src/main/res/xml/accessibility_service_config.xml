@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Accessibility service config for AppInterceptService (One Sec).
+
+    accessibilityEventTypes: Only TYPE_WINDOW_STATE_CHANGED — fires when the
+    foreground app changes. Nothing else. This is the most lightweight config
+    possible for app-switching detection.
+
+    accessibilityFeedbackType: FEEDBACK_GENERIC — no audio/haptic/visual
+    feedback; we just observe events silently.
+
+    notificationTimeout: 0 — don't debounce events; we need to act immediately
+    when an app switches to the foreground.
+
+    canRetrieveWindowContent: false — we never read window content, only
+    the package name from the event. Requesting this would (a) be unnecessary
+    and (b) raise privacy concerns for users.
+-->
+<accessibility-service
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:notificationTimeout="0"
+    android:canRetrieveWindowContent="false"
+    android:description="@string/accessibility_service_description" />

@@ -2,4 +2,21 @@
 <resources>
 
     <style name="Theme.YutoriKaizen" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!--
+        Translucent theme for InterceptOverlayActivity.
+        windowIsTranslucent = true  → activity window is see-through (no opaque surface)
+        windowBackground    = @null → removes the default white/black window fill
+        windowAnimationStyle = 0    → no slide animation; the scrim fades in via Compose
+        This lets the live Godot frog in MainActivity stay visible and jumping
+        behind the Compose-drawn semi-transparent scrim.
+    -->
+    <style name="Theme.YutoriKaizen.Translucent" parent="Theme.YutoriKaizen">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowAnimationStyle">@android:style/Animation.Translucent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
+
 </resources>
