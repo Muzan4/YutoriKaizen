@@ -64,6 +64,7 @@ const ParticleText = ({
   pointerRepel = 40,
   repelRadius = 120,
   idleDrift = 0,
+  scrollBurst = true,
   trigger = 'mount',
   fontSize = 'clamp(3rem, 12vw, 8rem)',
   fontWeight = 800,
@@ -95,6 +96,7 @@ const ParticleText = ({
       pointerRepel,
       repelRadius,
       idleDrift,
+      scrollBurst,
       trigger,
       fontSize,
       fontWeight,
@@ -192,9 +194,38 @@ const ParticleText = ({
       return s.gatherDuration;
     };
 
+    let isBurstingOut = false;
+    let burstOutStart = 0;
+    const BURST_OUT_DURATION = 650;
+
+    const burstOut = () => {
+      const s = settingsRef.current;
+      if (!particles.length || !s || reducedMotion) return;
+      gathering = false;
+      isBurstingOut = true;
+      burstOutStart = performance.now();
+
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const spread = (s.scatter || 180) * 1.5;
+
+      for (const particle of particles) {
+        particle.burstStartX = particle.x;
+        particle.burstStartY = particle.y;
+        const dx = particle.x - centerX;
+        const dy = particle.y - centerY;
+        const angle = Math.atan2(dy, dx) + (particle.seed - 0.5) * 1.2;
+        const distance = spread * (0.8 + particle.depth * 1.2);
+        particle.burstEndX = particle.targetX + Math.cos(angle) * distance;
+        particle.burstEndY = particle.targetY + Math.sin(angle) * distance;
+      }
+      wake();
+    };
+
     const startIntro = initial => {
       const s = settingsRef.current;
       if (!particles.length || !s) return;
+      isBurstingOut = false;
       introMode = s.intro;
       const spread = reducedMotion ? 0 : s.scatter;
       const tall = Math.max(1, bounds.bottom - bounds.top);
@@ -246,9 +277,9 @@ const ParticleText = ({
           startY = particle.targetY + Math.sin(angle) * distance + (particle.depth - 0.9) * spread * 0.45;
         }
 
-        particle.startX = startX;
-        particle.startY = startY;
-        particle.delay = reducedMotion ? 0 : delay;
+        particle.startX = initial ? startX : particle.x;
+        particle.startY = initial ? startY : particle.y;
+        particle.delay = reducedMotion ? 0 : (initial ? delay : delay * 0.45);
         if (initial) {
           particle.x = startX;
           particle.y = startY;
@@ -381,6 +412,13 @@ const ParticleText = ({
             baseY = particle.startY + (particle.targetY - particle.startY) * eased;
           }
           if (progress < 1) complete = false;
+        } else if (isBurstingOut) {
+          const local = (now - burstOutStart) / BURST_OUT_DURATION;
+          const burstProgress = clamp(local, 0, 1);
+          const eased = easeOutCubic(burstProgress);
+          baseX = particle.burstStartX + (particle.burstEndX - particle.burstStartX) * eased;
+          baseY = particle.burstStartY + (particle.burstEndY - particle.burstStartY) * eased;
+          if (burstProgress < 1) complete = false;
         } else if (drift) {
           baseX += Math.sin(time * 0.9 + particle.seed * 10) * s.idleDrift * particle.depth;
           baseY += Math.cos(time * 0.75 + particle.depth * 10) * s.idleDrift * particle.depth;
@@ -447,6 +485,7 @@ const ParticleText = ({
       }
 
       if (gathering && complete) gathering = false;
+      if (isBurstingOut && complete) isBurstingOut = false;
       if (bursting && !settling) bursting = false;
 
       ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -502,7 +541,7 @@ const ParticleText = ({
 
       const scanning = drawScan(now, s);
 
-      return gathering || moving || repel || drift || bursting || scanning;
+      return gathering || isBurstingOut || moving || repel || drift || bursting || scanning;
     };
 
     const frame = now => {
@@ -694,7 +733,14 @@ const ParticleText = ({
       }
 
       if (intro) {
-        startIntro(true);
+        if (settingsRef.current?.scrollBurst && !visible) {
+          startIntro(true);
+          gathering = false;
+        } else {
+          startIntro(true);
+          hasGathered = true;
+          isInView = true;
+        }
       } else {
         gathering = false;
       }
@@ -778,10 +824,42 @@ const ParticleText = ({
     });
     resizeObserver.observe(container);
 
-    const intersectionObserver = new IntersectionObserver(([entry]) => {
-      visible = entry.isIntersecting;
-      wake();
-    });
+    let hasGathered = false;
+    let isInView = false;
+
+    const intersectionObserver = new IntersectionObserver(
+      entries => {
+        const entry = entries[0];
+        if (!entry) return;
+
+        visible = entry.isIntersecting;
+        const ratio = entry.intersectionRatio;
+        const s = settingsRef.current;
+
+        if (s?.scrollBurst && !reducedMotion) {
+          // As it scrolls into view: text comes together!
+          if (entry.isIntersecting && ratio >= 0.25) {
+            if (!isInView) {
+              isInView = true;
+              hasGathered = true;
+              startIntro(false);
+            }
+          } 
+          // As it scrolls out of view / almost vanishing: burst outward!
+          else if (hasGathered && (ratio < 0.15 || !entry.isIntersecting)) {
+            if (isInView) {
+              isInView = false;
+              burstOut();
+            }
+          }
+        }
+
+        wake();
+      },
+      {
+        threshold: [0, 0.05, 0.15, 0.25, 0.5, 0.8]
+      }
+    );
     intersectionObserver.observe(container);
 
     const themeObserver = new MutationObserver(wake);
