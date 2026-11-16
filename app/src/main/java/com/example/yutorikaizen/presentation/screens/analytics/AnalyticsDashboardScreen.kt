@@ -10,8 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Lightbulb
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
@@ -156,12 +155,13 @@ fun AnalyticsDashboardScreen(
 @Composable
 private fun InsightsTab(uiState: AnalyticsUiState, viewModel: AnalyticsViewModel) {
     var showNciTooltip by remember { mutableStateOf(false) }
+    var showGoalDialog by remember { mutableStateOf(false) }
 
     if (showNciTooltip) {
         AlertDialog(
             onDismissRequest = { showNciTooltip = false },
-            title = { Text("Daily Consistency Score") },
-            text = { Text("Your daily consistency is calculated from:\n\n• Habits Completed (40%)\n• Urges Resisted vs Yielded (35%)\n• Deep Focus Sessions (25%)\n\nConsistent daily small actions help reset and rewire your attention baseline.") },
+            title = { Text("Daily Score") },
+            text = { Text("Your Daily Score tracks how well you are doing each day:\n\n• Habits Completed (75%)\nTracks both your self-made habits and journey habits.\n\n• Deep Focus Sessions (25%)\nEarned when you complete your daily deep focus session (starts at 25 minutes and gradually increases throughout the journey).\n\nNo urges to log — simply focus on positive daily actions!") },
             confirmButton = {
                 TextButton(onClick = { showNciTooltip = false }) {
                     Text("Got it", color = MossGreen)
@@ -170,6 +170,17 @@ private fun InsightsTab(uiState: AnalyticsUiState, viewModel: AnalyticsViewModel
             containerColor = CozyBlack2,
             titleContentColor = CreamWhite,
             textContentColor = SoftTan
+        )
+    }
+
+    if (showGoalDialog) {
+        SetScreenTimeGoalDialog(
+            currentGoalMinutes = uiState.usageInsight?.targetScreenTimeMinutes,
+            onDismiss = { showGoalDialog = false },
+            onSave = { minutes ->
+                viewModel.setTargetScreenTime(minutes)
+                showGoalDialog = false
+            }
         )
     }
 
@@ -233,7 +244,10 @@ private fun InsightsTab(uiState: AnalyticsUiState, viewModel: AnalyticsViewModel
             }
 
             item {
-                ScreenTimeCard(uiState.usageInsight)
+                ScreenTimeCard(
+                    insight = uiState.usageInsight,
+                    onSetGoalClick = { showGoalDialog = true }
+                )
             }
 
             item {
@@ -245,7 +259,11 @@ private fun InsightsTab(uiState: AnalyticsUiState, viewModel: AnalyticsViewModel
             }
 
             item {
-                RecommendationCard(uiState.usageInsight.recommendation)
+                RecommendationCard(
+                    recommendation = uiState.usageInsight.recommendation,
+                    hasGoal = uiState.usageInsight.targetScreenTimeMinutes != null,
+                    onSetGoalClick = { showGoalDialog = true }
+                )
             }
         }
     }
@@ -327,7 +345,7 @@ private fun NciScoreCard(nci: Float, onInfoClick: () -> Unit) {
             }
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Daily Consistency\nScore", style = MaterialTheme.typography.titleMedium,
+                    Text("Daily Score", style = MaterialTheme.typography.titleMedium,
                         color = CreamWhite, fontWeight = FontWeight.Bold)
                     IconButton(onClick = onInfoClick) {
                         Icon(Icons.Default.Info, contentDescription = "Score Info", tint = SoftTan)
@@ -336,7 +354,7 @@ private fun NciScoreCard(nci: Float, onInfoClick: () -> Unit) {
                 Spacer(Modifier.height(6.dp))
                 Text(label, style = MaterialTheme.typography.bodyMedium, color = color)
                 Spacer(Modifier.height(8.dp))
-                Text("40% habits · 35% surges · 25% focus",
+                Text("75% habits · 25% deep focus",
                     style = MaterialTheme.typography.labelSmall, color = DimTan)
             }
         }
@@ -344,11 +362,11 @@ private fun NciScoreCard(nci: Float, onInfoClick: () -> Unit) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// NCI History Section
+// Daily Score History Section
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
 private fun NciHistorySection(nciHistory: List<Pair<String, Float>>) {
-    Text("14-Day Consistency Trend", style = MaterialTheme.typography.labelLarge,
+    Text("14-Day Daily Score Trend", style = MaterialTheme.typography.labelLarge,
         color = SoftTan, fontWeight = FontWeight.Medium)
     Spacer(Modifier.height(8.dp))
     
@@ -475,58 +493,125 @@ private fun NciLineChart(history: List<Pair<String, Float>>) {
 // App Usage Insights Components
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
-private fun ScreenTimeCard(insight: UsageInsight) {
+private fun ScreenTimeCard(
+    insight: UsageInsight,
+    onSetGoalClick: () -> Unit
+) {
     Card(
         shape  = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = CozyBlack3),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Today's Screen Time", style = MaterialTheme.typography.labelMedium, color = SoftTan)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Today's Screen Time", style = MaterialTheme.typography.labelMedium, color = SoftTan)
+
+                Surface(
+                    onClick = onSetGoalClick,
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (insight.targetScreenTimeMinutes != null) CozyBlack4 else MossGreen.copy(alpha = 0.15f),
+                    border = BorderStroke(0.5.dp, if (insight.targetScreenTimeMinutes != null) CozyBorder else MossGreen.copy(alpha = 0.4f))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        if (insight.targetScreenTimeMinutes != null) {
+                            val targetH = insight.targetScreenTimeMinutes / 60
+                            val targetM = insight.targetScreenTimeMinutes % 60
+                            val targetStr = if (targetH > 0 && targetM > 0) "${targetH}h ${targetM}m" else if (targetH > 0) "${targetH}h" else "${targetM}m"
+                            Icon(Icons.Rounded.Edit, contentDescription = null, tint = SoftTan, modifier = Modifier.size(12.dp))
+                            Text("Goal: $targetStr", style = MaterialTheme.typography.labelSmall, color = SoftTan)
+                        } else {
+                            Icon(Icons.Rounded.Add, contentDescription = null, tint = MossGreen, modifier = Modifier.size(12.dp))
+                            Text("Set Goal", style = MaterialTheme.typography.labelSmall, color = MossGreen, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+            }
+
             Spacer(Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.Bottom) {
                 val hours = insight.totalScreenTimeMinutes / 60
                 val mins = insight.totalScreenTimeMinutes % 60
                 Text("${hours}h ${mins}m", style = MaterialTheme.typography.headlineLarge, color = CreamWhite, fontWeight = FontWeight.Bold)
-                
+
                 Spacer(Modifier.width(12.dp))
                 val trendColor = when(insight.screenTimeTrend) {
                     ScreenTimeTrend.UP -> SurgeRed
                     ScreenTimeTrend.DOWN -> MossGreen
                     ScreenTimeTrend.STABLE -> CozyAmber
+                    ScreenTimeTrend.NOT_SET -> SoftTan
                 }
                 val trendText = when(insight.screenTimeTrend) {
-                    ScreenTimeTrend.UP -> "↑ Above Avg"
-                    ScreenTimeTrend.DOWN -> "↓ Below Avg"
-                    ScreenTimeTrend.STABLE -> "− Stable"
+                    ScreenTimeTrend.UP -> "↑ Over Goal"
+                    ScreenTimeTrend.DOWN -> "✓ Within Goal"
+                    ScreenTimeTrend.STABLE -> "⚠ Near Limit"
+                    ScreenTimeTrend.NOT_SET -> "No Goal Set"
                 }
                 Text(trendText, style = MaterialTheme.typography.labelMedium, color = trendColor, modifier = Modifier.padding(bottom = 6.dp))
             }
-            
+
             Spacer(Modifier.height(16.dp))
-            val avgMins = insight.averageScreenTimeMinutes.toFloat().coerceAtLeast(1f)
-            val progress = (insight.totalScreenTimeMinutes / avgMins).coerceIn(0f, 1f)
-            val barColor = if (insight.totalScreenTimeMinutes > avgMins) SurgeRed else MossGreen
-            
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(CircleShape)
-                    .background(CozyBlack4)
-            ) {
+
+            if (insight.targetScreenTimeMinutes != null) {
+                val targetMins = insight.targetScreenTimeMinutes.toFloat().coerceAtLeast(1f)
+                val progress = (insight.totalScreenTimeMinutes / targetMins).coerceIn(0f, 1f)
+                val barColor = when(insight.screenTimeTrend) {
+                    ScreenTimeTrend.UP -> SurgeRed
+                    ScreenTimeTrend.STABLE -> CozyAmber
+                    else -> MossGreen
+                }
+
                 Box(
                     modifier = Modifier
-                        .fillMaxHeight()
-                        .fillMaxWidth(progress)
+                        .fillMaxWidth()
+                        .height(8.dp)
                         .clip(CircleShape)
-                        .background(barColor)
+                        .background(CozyBlack4)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(progress)
+                            .clip(CircleShape)
+                            .background(barColor)
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+                val subtext = if (insight.totalScreenTimeMinutes > insight.targetScreenTimeMinutes) {
+                    val over = insight.totalScreenTimeMinutes - insight.targetScreenTimeMinutes
+                    val overStr = if (over >= 60) "${over / 60}h ${over % 60}m" else "${over}m"
+                    "$overStr over your daily target"
+                } else {
+                    val rem = insight.targetScreenTimeMinutes - insight.totalScreenTimeMinutes
+                    val remStr = if (rem >= 60) "${rem / 60}h ${rem % 60}m" else "${rem}m"
+                    "$remStr remaining of daily target"
+                }
+                Text(subtext, style = MaterialTheme.typography.labelSmall, color = if (insight.screenTimeTrend == ScreenTimeTrend.UP) SurgeRed else DimTan)
+            } else {
+                Text(
+                    "You haven't set a screen time goal yet. Set one to track whether you are staying within your goal.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = SoftTan
                 )
+                Spacer(Modifier.height(10.dp))
+                OutlinedButton(
+                    onClick = onSetGoalClick,
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(1.dp, MossGreen),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Rounded.Timer, contentDescription = null, tint = MossGreen, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Set Daily Screen Time Goal", color = MossGreen, fontWeight = FontWeight.SemiBold)
+                }
             }
-            Spacer(Modifier.height(8.dp))
-            val avgH = insight.averageScreenTimeMinutes / 60
-            val avgM = insight.averageScreenTimeMinutes % 60
-            Text("7-day average: ${avgH}h ${avgM}m", style = MaterialTheme.typography.labelSmall, color = DimTan)
         }
     }
 }
@@ -645,20 +730,215 @@ private fun UsageTrendChart(insight: UsageInsight) {
 }
 
 @Composable
-private fun RecommendationCard(recommendation: String) {
+private fun RecommendationCard(
+    recommendation: String,
+    hasGoal: Boolean,
+    onSetGoalClick: () -> Unit
+) {
     Card(
         shape  = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = CozyBlack2),
-        border = BorderStroke(1.dp, MossGreen.copy(alpha = 0.3f)),
+        border = BorderStroke(1.dp, if (!hasGoal) CozyAmber.copy(alpha = 0.5f) else MossGreen.copy(alpha = 0.3f)),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Rounded.Lightbulb,
+                    contentDescription = null,
+                    tint = if (!hasGoal) CozyAmber else MossGreen,
+                    modifier = Modifier.size(22.dp)
+                )
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    recommendation,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (!hasGoal) WarmCream else MossGreen,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            if (!hasGoal) {
+                Spacer(Modifier.height(12.dp))
+                Button(
+                    onClick = onSetGoalClick,
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = CozyAmber,
+                        contentColor = CozyBlack
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Rounded.Timer, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Set My Screen Time Goal", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SetScreenTimeGoalDialog(
+    currentGoalMinutes: Int?,
+    onDismiss: () -> Unit,
+    onSave: (Int) -> Unit
+) {
+    var selectedMinutes by remember { mutableIntStateOf(currentGoalMinutes ?: 120) }
+
+    val presets = listOf(
+        60 to "1h",
+        90 to "1h 30m",
+        120 to "2h",
+        150 to "2h 30m",
+        180 to "3h",
+        240 to "4h"
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                if (currentGoalMinutes == null) "Set Daily Screen Time Goal" else "Edit Screen Time Goal",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = CreamWhite
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "Set your daily limit so the app can track your progress and alert you when your screen time is up.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = SoftTan,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(Modifier.height(20.dp))
+
+                // Stepper Row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(
+                        onClick = { selectedMinutes = (selectedMinutes - 15).coerceAtLeast(15) },
+                        modifier = Modifier
+                            .size(44.dp)
+                            .background(CozyBlack3, CircleShape)
+                    ) {
+                        Icon(Icons.Rounded.Remove, contentDescription = "Decrease", tint = CreamWhite)
+                    }
+
+                    Spacer(Modifier.width(20.dp))
+
+                    val h = selectedMinutes / 60
+                    val m = selectedMinutes % 60
+                    val timeDisplay = if (h > 0 && m > 0) "${h}h ${m}m" else if (h > 0) "${h}h" else "${m}m"
+                    Text(
+                        text = timeDisplay,
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MossGreen
+                        )
+                    )
+
+                    Spacer(Modifier.width(20.dp))
+
+                    IconButton(
+                        onClick = { selectedMinutes = (selectedMinutes + 15).coerceAtMost(720) },
+                        modifier = Modifier
+                            .size(44.dp)
+                            .background(CozyBlack3, CircleShape)
+                    ) {
+                        Icon(Icons.Rounded.Add, contentDescription = "Increase", tint = CreamWhite)
+                    }
+                }
+
+                Spacer(Modifier.height(18.dp))
+
+                // Quick Presets
+                Text("Quick presets:", style = MaterialTheme.typography.labelSmall, color = DimTan)
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    presets.take(3).forEach { (mins, label) ->
+                        PresetChip(
+                            label = label,
+                            isSelected = selectedMinutes == mins,
+                            onClick = { selectedMinutes = mins },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+                Spacer(Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    presets.drop(3).forEach { (mins, label) ->
+                        PresetChip(
+                            label = label,
+                            isSelected = selectedMinutes == mins,
+                            onClick = { selectedMinutes = mins },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onSave(selectedMinutes) },
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MossGreen,
+                    contentColor = CozyBlack
+                )
+            ) {
+                Text("Save Goal", fontWeight = FontWeight.SemiBold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = SoftTan)
+            }
+        },
+        containerColor = CozyBlack2,
+        titleContentColor = CreamWhite,
+        textContentColor = SoftTan
+    )
+}
+
+@Composable
+private fun PresetChip(
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(8.dp),
+        color = if (isSelected) MossGreen.copy(alpha = 0.2f) else CozyBlack3,
+        border = BorderStroke(1.dp, if (isSelected) MossGreen else CozyBorder),
+        modifier = modifier
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.padding(vertical = 8.dp)
         ) {
-            Icon(Icons.Rounded.Lightbulb, contentDescription = null, tint = CozyAmber, modifier = Modifier.size(22.dp))
-            Spacer(Modifier.width(12.dp))
-            Text(recommendation, style = MaterialTheme.typography.bodyMedium, color = MossGreen)
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                color = if (isSelected) MossGreen else SoftTan,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+            )
         }
     }
 }

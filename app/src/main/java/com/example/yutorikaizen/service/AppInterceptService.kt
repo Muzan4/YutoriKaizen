@@ -95,6 +95,9 @@ class AppInterceptService : AccessibilityService() {
         val previousPkg = currentForegroundPkg
         currentForegroundPkg = pkg
 
+        // Immediately notify CatOverlayService to hide/show overlay for excluded apps (like Google Pay)
+        CatOverlayService.onForegroundPackageChanged(pkg)
+
         // If this package is in the rules cache
         val config = rulesCache[pkg] ?: return
 

@@ -9,8 +9,9 @@ import DownloadSection from './components/DownloadSection';
 import Footer from './components/Footer';
 import icRibiHeadImg from './assets/ic_ribi_head.png';
 
-// Google Drive public download link for beta APK
-export const GOOGLE_DRIVE_DOWNLOAD_URL = "https://drive.google.com/file/d/1rZWZramDUcQnE_3uV-bss5N0-tQ0KaMQ/view?usp=sharing";
+// GitHub Releases public download link for beta APK
+export const APK_DOWNLOAD_URL = "https://github.com/Muzan4/YutoriKaizen/releases/latest";
+export const GITHUB_RELEASES_URL = "https://github.com/Muzan4/YutoriKaizen/releases";
 
 export default function App() {
   const menuItems = [
@@ -74,15 +75,15 @@ export default function App() {
 
       {/* Main Page Content */}
       <main>
-        <Hero driveUrl={GOOGLE_DRIVE_DOWNLOAD_URL} />
+        <Hero downloadUrl={APK_DOWNLOAD_URL} />
         <Philosophy />
         <SurgeShowcase />
         <FeaturesGrid />
         <RibiShowcase />
-        <DownloadSection driveUrl={GOOGLE_DRIVE_DOWNLOAD_URL} />
+        <DownloadSection downloadUrl={APK_DOWNLOAD_URL} releasesUrl={GITHUB_RELEASES_URL} />
       </main>
 
-      <Footer driveUrl={GOOGLE_DRIVE_DOWNLOAD_URL} />
+      <Footer downloadUrl={APK_DOWNLOAD_URL} />
     </div>
   );
 }

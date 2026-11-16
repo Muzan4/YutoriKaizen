@@ -313,7 +313,7 @@ private fun QuickStatsStrip(uiState: HomeUiState) {
         QuickStat(
             icon       = com.example.yutorikaizen.R.drawable.ic_brain_nci,
             value      = "${(uiState.nciScore * 100).toInt()}%",
-            label      = "NCI",
+            label      = "Daily Score",
             valueColor = nciColor
         )
     }

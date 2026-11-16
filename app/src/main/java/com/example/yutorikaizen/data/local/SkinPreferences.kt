@@ -36,6 +36,7 @@ class SkinPreferences @Inject constructor(
         private val USAGE_TRACKING_KEY = booleanPreferencesKey("usage_tracking_enabled")
         private val NOTIFICATIONS_ENABLED_KEY = booleanPreferencesKey("notifications_enabled")
         private val CURRENT_JOURNEY_DAY_KEY = intPreferencesKey("current_journey_day")
+        private val TARGET_SCREEN_TIME_MINUTES_KEY = intPreferencesKey("target_screen_time_minutes")
         const val DEFAULT_SKIN = "green"
     }
 
@@ -64,6 +65,16 @@ class SkinPreferences @Inject constructor(
     /** Emits whether notifications are enabled. */
     val notificationsEnabled: Flow<Boolean> = context.skinDataStore.data
         .map { prefs -> prefs[NOTIFICATIONS_ENABLED_KEY] ?: false }
+
+    /** Emits the user's target daily screen time in minutes, or null if not set. */
+    val targetScreenTimeMinutes: Flow<Int?> = context.skinDataStore.data
+        .map { prefs -> prefs[TARGET_SCREEN_TIME_MINUTES_KEY] }
+
+    suspend fun setTargetScreenTimeMinutes(minutes: Int) {
+        context.skinDataStore.edit { prefs ->
+            prefs[TARGET_SCREEN_TIME_MINUTES_KEY] = minutes
+        }
+    }
 
     suspend fun markRibiIntroSeen() {
         context.skinDataStore.edit { prefs ->

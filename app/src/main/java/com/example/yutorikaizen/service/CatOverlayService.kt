@@ -4,6 +4,8 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ValueAnimator
 import android.app.*
+import android.app.usage.UsageEvents
+import android.app.usage.UsageStatsManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -47,6 +49,8 @@ class CatOverlayService : Service() {
     // ── State flags ──────────────────────────────────────────────────────────
     private var isHidden = false
     private var screenOn = true
+    private var isViewAttached = false
+    private var isExcludedForeground = false
 
     // ── Cached metrics ───────────────────────────────────────────────────────
     private var screenWidth = 0
@@ -59,10 +63,83 @@ class CatOverlayService : Service() {
     private val peekStartRunnable = Runnable { startPeek() }
     private val peekStopRunnable  = Runnable { stopPeek()  }
 
+    private val foregroundCheckRunnable = object : Runnable {
+        override fun run() {
+            if (screenOn) {
+                val currentPkg = detectForegroundPackage()
+                if (currentPkg != null) {
+                    checkForegroundPackage(currentPkg)
+                }
+            }
+            handler.postDelayed(this, 1200L)
+        }
+    }
+
     fun handlePopupClosed() {
         // When shortcut menu closes, show the side overlay back on the side as scroll
-        floatingView?.visibility = View.VISIBLE
-        switchToIdleCat()
+        if (!isExcludedForeground) {
+            attachOverlay()
+            switchToIdleCat()
+        }
+    }
+
+    private fun detachOverlay() {
+        if (isViewAttached && floatingView != null) {
+            try {
+                windowManager.removeView(floatingView)
+            } catch (_: Exception) {}
+            isViewAttached = false
+        }
+    }
+
+    private fun attachOverlay() {
+        if (!isViewAttached && floatingView != null && params != null && !isExcludedForeground) {
+            try {
+                windowManager.addView(floatingView, params)
+                isViewAttached = true
+                floatingView?.visibility = View.VISIBLE
+                resetHideTimer()
+            } catch (_: Exception) {}
+        }
+    }
+
+    fun checkForegroundPackage(packageName: String?) {
+        if (packageName == null || packageName == this.packageName) return
+        val isExcluded = CatOverlayPreferences.isPackageExcluded(this, packageName)
+        if (isExcluded != isExcludedForeground) {
+            isExcludedForeground = isExcluded
+            handler.post {
+                if (isExcluded) {
+                    detachOverlay()
+                } else if (screenOn) {
+                    attachOverlay()
+                }
+            }
+        }
+    }
+
+    private fun detectForegroundPackage(): String? {
+        val interceptPkg = AppInterceptService.currentForegroundPkg
+        if (!interceptPkg.isNullOrBlank() && interceptPkg != packageName) {
+            return interceptPkg
+        }
+        return try {
+            val usm = getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager ?: return null
+            val time = System.currentTimeMillis()
+            val events = usm.queryEvents(time - 3500, time)
+            var lastPkg: String? = null
+            val event = UsageEvents.Event()
+            while (events.hasNextEvent()) {
+                events.getNextEvent(event)
+                if (event.eventType == UsageEvents.Event.ACTIVITY_RESUMED ||
+                    event.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
+                    lastPkg = event.packageName
+                }
+            }
+            lastPkg
+        } catch (_: Exception) {
+            null
+        }
     }
 
     private fun switchToIdleCat() {
@@ -164,6 +241,7 @@ class CatOverlayService : Service() {
         registerReceiver(screenReceiver, filter)
 
         setupFloatingView()
+        handler.post(foregroundCheckRunnable)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -175,14 +253,13 @@ class CatOverlayService : Service() {
         super.onDestroy()
         if (instance == this) instance = null
         handler.removeCallbacksAndMessages(null)
+        handler.removeCallbacks(foregroundCheckRunnable)
         try { unregisterReceiver(screenReceiver) } catch (_: Exception) {}
         CatOverlayPreferences.unregisterListener(this, prefListener)
         slideAnimator?.cancel()
         slideAnimator = null
         catView?.cancelAnimation()
-        floatingView?.let {
-            try { windowManager.removeView(it) } catch (_: Exception) {}
-        }
+        detachOverlay()
         floatingView = null
         catView = null
     }
@@ -231,6 +308,7 @@ class CatOverlayService : Service() {
         }
 
         windowManager.addView(floatingView, params)
+        isViewAttached = true
 
         catView?.setOnTouchListener(makeTouchListener())
         catView?.setOnClickListener { onCatClick() }
@@ -449,6 +527,10 @@ class CatOverlayService : Service() {
 
         @Volatile
         private var instance: CatOverlayService? = null
+
+        fun onForegroundPackageChanged(packageName: String?) {
+            instance?.checkForegroundPackage(packageName)
+        }
 
         fun notifyPopupClosed() {
             instance?.handlePopupClosed()

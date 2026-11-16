@@ -14,7 +14,8 @@ data class UsageInsight(
     val screenTimeTrend: ScreenTimeTrend,
     val topApps: List<AppUsage>,
     val dailyTrend: List<Pair<String, Int>>,
-    val recommendation: String
+    val recommendation: String,
+    val targetScreenTimeMinutes: Int? = null
 )
 
-enum class ScreenTimeTrend { UP, DOWN, STABLE }
+enum class ScreenTimeTrend { UP, DOWN, STABLE, NOT_SET }

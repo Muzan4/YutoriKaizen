@@ -3,7 +3,9 @@ package com.example.yutorikaizen.domain.usecase
 import com.example.yutorikaizen.domain.model.DifficultyLevel
 import com.example.yutorikaizen.domain.model.NeuralPhase
 import com.example.yutorikaizen.domain.model.NeuralPhases
-import java.util.concurrent.TimeUnit
+import java.time.Instant
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
 /**
@@ -18,6 +20,26 @@ class CurrentPhaseUseCase @Inject constructor() {
         val daysInPhaseRemaining: Int,
         val phaseProgressFraction: Float   // 0f..1f
     )
+
+    /**
+     * Calculates the 1-based day of the journey using local calendar days.
+     * Day 1 is the calendar day the journey was started.
+     */
+    fun calculateDayNumber(
+        startDateMs: Long,
+        nowMs: Long = System.currentTimeMillis(),
+        zoneId: ZoneId = ZoneId.systemDefault()
+    ): Int {
+        if (startDateMs <= 0L) return 1
+        return try {
+            val startLocalDate = Instant.ofEpochMilli(startDateMs).atZone(zoneId).toLocalDate()
+            val todayLocalDate = Instant.ofEpochMilli(nowMs).atZone(zoneId).toLocalDate()
+            val daysBetween = ChronoUnit.DAYS.between(startLocalDate, todayLocalDate)
+            (daysBetween + 1).toInt().coerceAtLeast(1)
+        } catch (e: Exception) {
+            1
+        }
+    }
 
     fun execute(dayNumber: Int, difficulty: DifficultyLevel): JourneyState {
         val safeDay      = dayNumber.coerceAtLeast(1)
@@ -40,8 +62,7 @@ class CurrentPhaseUseCase @Inject constructor() {
     }
 
     fun execute(startDateMs: Long, difficulty: DifficultyLevel): JourneyState {
-        val nowMs        = System.currentTimeMillis()
-        val dayNumber    = ((nowMs - startDateMs) / TimeUnit.DAYS.toMillis(1)).toInt() + 1
-        return execute(dayNumber.coerceAtLeast(1), difficulty)
+        val dayNumber = calculateDayNumber(startDateMs)
+        return execute(dayNumber, difficulty)
     }
 }

@@ -3,7 +3,9 @@ package com.example.yutorikaizen.presentation.screens.habits
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.yutorikaizen.domain.model.*
+import com.example.yutorikaizen.domain.repository.DailyCheckInRepository
 import com.example.yutorikaizen.domain.repository.HabitRepository
+import com.example.yutorikaizen.domain.usecase.NciCalculator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -21,7 +23,9 @@ data class HabitTrackerUiState(
 
 @HiltViewModel
 class HabitTrackerViewModel @Inject constructor(
-    private val habitRepository: HabitRepository
+    private val habitRepository: HabitRepository,
+    private val dailyCheckInRepository: DailyCheckInRepository,
+    private val nciCalculator: NciCalculator
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HabitTrackerUiState())
@@ -87,6 +91,26 @@ class HabitTrackerViewModel @Inject constructor(
                     loggedAt = System.currentTimeMillis()
                 )
             )
+
+            // Sync today's Daily Score
+            val todayCheckIn = dailyCheckInRepository.getForToday()
+            if (todayCheckIn != null) {
+                val habits = habitRepository.observeActiveHabits().firstOrNull() ?: emptyList()
+                val logs = habitRepository.getLogsForRange(todayEpochDay, todayEpochDay).associateBy { it.habitId }
+                val customDone = habits.count { h ->
+                    val count = if (h.id == habit.id) newCount else (logs[h.id]?.completedCount ?: 0)
+                    count >= h.targetCount
+                }
+                val newScore = nciCalculator.calculateDailyScore(
+                    completedJourneyHabits = todayCheckIn.completedHabitIds.size,
+                    totalJourneyHabits = 4,
+                    completedCustomHabits = customDone,
+                    totalCustomHabits = habits.size,
+                    focusMinutes = todayCheckIn.focusMinutes,
+                    phaseNumber = todayCheckIn.phaseNumber
+                )
+                dailyCheckInRepository.upsert(todayCheckIn.copy(nciScore = newScore))
+            }
         }
     }
 

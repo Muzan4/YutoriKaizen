@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import ParticleText from './reactbits/ParticleText';
 import { Download, ShieldCheck, Check, Copy, ExternalLink, HelpCircle, Smartphone, AlertTriangle } from 'lucide-react';
 
-export default function DownloadSection({ driveUrl }) {
+export default function DownloadSection({ downloadUrl, releasesUrl, driveUrl }) {
+  const finalUrl = downloadUrl || driveUrl;
   const [copied, setCopied] = useState(false);
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(driveUrl);
+    navigator.clipboard.writeText(finalUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -40,7 +41,7 @@ export default function DownloadSection({ driveUrl }) {
         </div>
 
         <p className="text-parchment-dim text-sm sm:text-base md:text-lg leading-relaxed mt-2">
-          Directly distributed via Google Drive for maximum autonomy. No accounts required, no telemetry, no subscription lock-ins.
+          Directly distributed via GitHub Releases for maximum autonomy. No accounts required, no telemetry, no subscription lock-ins.
         </p>
       </div>
 
@@ -61,7 +62,7 @@ export default function DownloadSection({ driveUrl }) {
             </h3>
 
             <p className="text-sm text-parchment-dim leading-relaxed">
-              Download the latest release APK directly from our verified Google Drive folder. Fast, secure, and ready to install on any Android 8.0+ smartphone.
+              Download the latest release APK directly from our verified GitHub repository. Fast, secure, and ready to install on any Android 8.0+ smartphone.
             </p>
 
             <div className="flex flex-wrap gap-4 pt-2 text-xs font-mono text-parchment-dim">
@@ -75,20 +76,20 @@ export default function DownloadSection({ driveUrl }) {
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-moss" />
-                <span>~32 MB • Lightweight & Fast</span>
+                <span>~128 MB • Universal Release</span>
               </div>
             </div>
           </div>
 
           <div className="md:col-span-5 flex flex-col gap-3">
             <a
-              href={driveUrl}
+              href={finalUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full py-4 px-6 rounded-2xl bg-moss hover:bg-moss-light text-cozy-950 font-semibold text-center flex items-center justify-center gap-3 transition-all duration-200 transform hover:-translate-y-0.5 shadow-xl shadow-moss/20 group"
             >
               <Download className="w-5 h-5 transition-transform group-hover:scale-110" />
-              <span>Download from Google Drive</span>
+              <span>Download from GitHub</span>
               <ExternalLink className="w-4 h-4 opacity-60" />
             </a>
 
@@ -99,12 +100,12 @@ export default function DownloadSection({ driveUrl }) {
               {copied ? (
                 <>
                   <Check className="w-4 h-4 text-moss" />
-                  <span>Google Drive Link Copied!</span>
+                  <span>GitHub Link Copied!</span>
                 </>
               ) : (
                 <>
                   <Copy className="w-4 h-4" />
-                  <span>Copy Drive Download Link</span>
+                  <span>Copy GitHub Download Link</span>
                 </>
               )}
             </button>
@@ -125,7 +126,7 @@ export default function DownloadSection({ driveUrl }) {
             </div>
             <h5 className="font-semibold text-parchment-100 text-sm mb-1">Download the APK</h5>
             <p className="text-xs text-parchment-dim leading-relaxed">
-              Click the Google Drive button above on your phone or PC and save the APK file.
+              Click the GitHub button above on your phone or PC and save the APK file.
             </p>
           </div>
 

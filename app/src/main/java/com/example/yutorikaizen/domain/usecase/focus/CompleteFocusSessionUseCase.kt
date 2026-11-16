@@ -1,18 +1,18 @@
 package com.example.yutorikaizen.domain.usecase.focus
 
+import com.example.yutorikaizen.domain.model.DailyCheckIn
+import com.example.yutorikaizen.domain.repository.DailyCheckInRepository
 import com.example.yutorikaizen.domain.repository.FocusSessionRepository
+import java.time.LocalDate
 import javax.inject.Inject
 
 /**
  * Saves a completed (or abandoned) focus session to the database.
- *
- * WHY a use case instead of calling the repository directly from the ViewModel?
- * The ViewModel is a UI controller — it should not contain business logic.
- * Use cases are single-purpose: one class, one job. This makes them easy to test
- * and easy to reuse from multiple places (e.g. a future widget or notification action).
+ * If completed, also updates today's daily check-in focus minutes.
  */
 class CompleteFocusSessionUseCase @Inject constructor(
-    private val repository: FocusSessionRepository
+    private val repository: FocusSessionRepository,
+    private val dailyCheckInRepository: DailyCheckInRepository
 ) {
     suspend operator fun invoke(startTime: Long, durationMinutes: Int, completed: Boolean) {
         repository.saveSession(
@@ -20,5 +20,19 @@ class CompleteFocusSessionUseCase @Inject constructor(
             durationMinutes = durationMinutes,
             completed       = completed
         )
+        if (completed) {
+            val existing = dailyCheckInRepository.getForToday()
+            val newFocusMinutes = (existing?.focusMinutes ?: 0) + durationMinutes
+            val todayCheckIn = existing?.copy(focusMinutes = newFocusMinutes)
+                ?: DailyCheckIn(
+                    id = 0,
+                    epochDay = LocalDate.now().toEpochDay(),
+                    phaseNumber = 1,
+                    completedHabitIds = emptyList(),
+                    focusMinutes = newFocusMinutes,
+                    nciScore = 0f
+                )
+            dailyCheckInRepository.upsert(todayCheckIn)
+        }
     }
 }

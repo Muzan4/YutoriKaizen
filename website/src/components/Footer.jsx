@@ -2,7 +2,8 @@ import React from 'react';
 import icRibiHeadImg from '../assets/ic_ribi_head.png';
 import { Heart, Sparkles } from 'lucide-react';
 
-export default function Footer({ driveUrl }) {
+export default function Footer({ downloadUrl, driveUrl }) {
+  const finalUrl = downloadUrl || driveUrl;
   return (
     <footer className="border-t border-white/5 bg-cozy-950 py-16 px-4 sm:px-6 lg:px-8 text-center text-parchment-dim relative overflow-hidden">
       <div className="max-w-7xl mx-auto flex flex-col items-center space-y-8">
@@ -23,7 +24,7 @@ export default function Footer({ driveUrl }) {
           <a href="#surge-bridge" className="hover:text-parchment-100 transition-colors">Surge Bridge</a>
           <a href="#features" className="hover:text-parchment-100 transition-colors">Features</a>
           <a href="#ribi" className="hover:text-parchment-100 transition-colors">Ribi Companion</a>
-          <a href={driveUrl} target="_blank" rel="noopener noreferrer" className="hover:text-moss text-moss-light transition-colors font-medium">Download APK</a>
+          <a href={finalUrl} target="_blank" rel="noopener noreferrer" className="hover:text-moss text-moss-light transition-colors font-medium">Download APK</a>
         </div>
 
         {/* Japanese sentiment quote */}

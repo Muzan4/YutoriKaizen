@@ -101,8 +101,17 @@ class AccountViewModel @Inject constructor(
                 skinPreferences.currentJourneyDay,
                 dailyCheckInRepository.observeLast14Days()
             ) { profile, day, checkIns -> Triple(profile, day, checkIns) }
-                .collect { (profile, day, checkIns) ->
+                .collect { (profile, rawDay, checkIns) ->
                     if (profile != null) {
+                        val day = if (profile.startDate > 0L) {
+                            currentPhaseUseCase.calculateDayNumber(profile.startDate)
+                        } else {
+                            rawDay
+                        }
+                        if (rawDay != day) {
+                            skinPreferences.setCurrentJourneyDay(day)
+                        }
+
                         val journeyState = currentPhaseUseCase.execute(day, profile.difficultyLevel)
                         val program = DopaminePrograms.byId(profile.selectedProgramId)
 

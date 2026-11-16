@@ -3,7 +3,8 @@ import TechText from './reactbits/TechText';
 import icRibiHeadImg from '../assets/ic_ribi_head.png';
 import { Download, Sparkles, ShieldCheck, Heart, ArrowDown } from 'lucide-react';
 
-export default function Hero({ driveUrl }) {
+export default function Hero({ downloadUrl, driveUrl }) {
+  const finalUrl = downloadUrl || driveUrl;
   return (
     <section id="hero" className="relative pt-4 sm:pt-6 md:pt-8 pb-10 sm:pb-14 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto flex flex-col items-center text-center overflow-visible">
       {/* Ambient background glows */}
@@ -57,14 +58,14 @@ export default function Hero({ driveUrl }) {
       {/* Action Buttons */}
       <div className="mt-5 sm:mt-6 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto relative z-20">
         <a
-          href={driveUrl}
+          href={finalUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-7 py-3 rounded-2xl bg-moss hover:bg-moss-light text-cozy-950 font-medium text-base transition-all duration-200 transform hover:-translate-y-0.5 shadow-lg shadow-moss/20 group"
         >
           <Download className="w-5 h-5 transition-transform group-hover:scale-110" />
           <span>Download Android APK</span>
-          <span className="text-xs px-2 py-0.5 rounded-full bg-cozy-950/20 font-mono">Google Drive</span>
+          <span className="text-xs px-2 py-0.5 rounded-full bg-cozy-950/20 font-mono">GitHub</span>
         </a>
 
         <a

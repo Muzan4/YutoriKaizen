@@ -518,7 +518,7 @@ private fun NciRingSmall(nci: Float) {
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text("${(nci * 100).toInt()}%", fontSize = 11.sp, color = color, fontWeight = FontWeight.Bold)
-            Text("NCI", fontSize = 8.sp, color = SoftTan)
+            Text("Score", fontSize = 8.sp, color = SoftTan)
         }
     }
 }

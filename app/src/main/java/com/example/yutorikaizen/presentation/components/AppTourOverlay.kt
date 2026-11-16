@@ -90,7 +90,7 @@ val APP_TOUR_STEPS = listOf(
     TourStep(
         title = "Deep Focus & Rest",
         category = "FOCUS & RECOVERY",
-        description = "Start structured Pomodoro focus sessions to rebuild attention span, or take screen-free restorative breaks to let your prefrontal cortex recharge.",
+        description = "Start structured focus sessions with presets or custom time to rebuild attention span. Completing your daily deep focus session (starting at 25 minutes) earns 25% of your Daily Score!",
         targetRoute = NavRoute.Home.route,
         targetKey = "home_focus_break_row",
         cornerRadiusDp = 18f,
@@ -124,13 +124,13 @@ val APP_TOUR_STEPS = listOf(
         pointerLabel = "Phases & Missions"
     ),
     TourStep(
-        title = "Daily Insight",
+        title = "Daily Score",
         category = "ANALYTICS",
-        description = "View your composite consistency score weighted across habits, resisted surges, and focus minutes, along with craving trigger analytics.",
+        description = "Track how well you do each day: 75% comes from completing habits (both your self-made habits and journey habits) and 25% comes from completed deep focus sessions.",
         targetRoute = NavRoute.Analytics.route,
         targetKey = "insight_score_card",
         cornerRadiusDp = 24f,
-        pointerLabel = "Daily Consistency Score"
+        pointerLabel = "Daily Score"
     ),
     TourStep(
         title = "Settings & Profile",

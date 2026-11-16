@@ -27,7 +27,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.yutorikaizen.presentation.theme.*
 
-private val DURATION_OPTIONS = listOf(15, 25, 45, 60, 90)
+private val PRESET_DURATIONS = listOf(15, 25, 45, 60)
 
 @Composable
 fun FocusTimerScreen(
@@ -37,14 +37,17 @@ fun FocusTimerScreen(
     BackHandler(onBack = onBack)
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val minutes  = uiState.secondsRemaining / 60
-    val seconds  = uiState.secondsRemaining % 60
-    val progress = if (uiState.durationSeconds > 0)
-        uiState.secondsRemaining.toFloat() / uiState.durationSeconds.toFloat()
-    else 1f
+    val isIdle = !uiState.isRunning && !uiState.isPaused && !uiState.isCompleted
 
     // Selected duration pill state (only matters before session starts)
     var selectedMinutes by remember { mutableIntStateOf(25) }
+    var showCustomDialog by remember { mutableStateOf(false) }
+
+    val minutes  = if (isIdle) selectedMinutes else uiState.secondsRemaining / 60
+    val seconds  = if (isIdle) 0 else uiState.secondsRemaining % 60
+    val progress = if (uiState.durationSeconds > 0)
+        uiState.secondsRemaining.toFloat() / uiState.durationSeconds.toFloat()
+    else 1f
 
     // Glow animation while running
     val infiniteTransition = rememberInfiniteTransition(label = "focus_glow")
@@ -57,6 +60,138 @@ fun FocusTimerScreen(
         ),
         label = "glow_alpha"
     )
+
+    // Custom Duration Dialog
+    if (showCustomDialog) {
+        var tempMins by remember { mutableIntStateOf(selectedMinutes.coerceIn(1, 180)) }
+
+        AlertDialog(
+            onDismissRequest = { showCustomDialog = false },
+            title = {
+                Text(
+                    "Custom Focus Duration",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = CreamWhite,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        "Set your custom deep focus session (1 – 180 minutes)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = SoftTan,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(Modifier.height(18.dp))
+
+                    // Stepper row
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Surface(
+                            onClick = { tempMins = (tempMins - 5).coerceAtLeast(1) },
+                            color = CozyBlack3,
+                            shape = CircleShape,
+                            border = BorderStroke(1.dp, CozyBorder),
+                            modifier = Modifier.size(46.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text("-5", color = SoftTan, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            }
+                        }
+
+                        Surface(
+                            color = CozyBlack3,
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.5.dp, MossGreen),
+                            modifier = Modifier.width(110.dp).height(52.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    "$tempMins min",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = MossGreen,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        Surface(
+                            onClick = { tempMins = (tempMins + 5).coerceAtMost(180) },
+                            color = CozyBlack3,
+                            shape = CircleShape,
+                            border = BorderStroke(1.dp, CozyBorder),
+                            modifier = Modifier.size(46.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text("+5", color = SoftTan, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(18.dp))
+
+                    // Quick Jump Pills
+                    Text(
+                        "Quick jump",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = DimTan
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        listOf(20, 30, 50, 75, 90).forEach { quickVal ->
+                            Surface(
+                                onClick = { tempMins = quickVal },
+                                color = if (tempMins == quickVal) MossGreenDim else CozyBlack3,
+                                shape = RoundedCornerShape(8.dp),
+                                border = BorderStroke(1.dp, if (tempMins == quickVal) MossGreen else CozyBorder),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    "${quickVal}m",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = if (tempMins == quickVal) MossGreen else SoftTan,
+                                    fontWeight = if (tempMins == quickVal) FontWeight.Bold else FontWeight.Normal,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(vertical = 8.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        selectedMinutes = tempMins
+                        showCustomDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MossGreen,
+                        contentColor = CozyBlack
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Set ${tempMins} min", fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCustomDialog = false }) {
+                    Text("Cancel", color = DimTan)
+                }
+            },
+            containerColor = CozyBlack2,
+            shape = RoundedCornerShape(20.dp)
+        )
+    }
 
     Box(
         modifier = Modifier
@@ -153,7 +288,7 @@ fun FocusTimerScreen(
 
                 // Ring canvas
                 val animatedProgress by animateFloatAsState(
-                    targetValue   = progress,
+                    targetValue   = if (isIdle) 1f else progress,
                     animationSpec = tween(500, easing = EaseOutCubic),
                     label         = "ring_progress"
                 )
@@ -209,7 +344,7 @@ fun FocusTimerScreen(
                         )
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            text  = "${uiState.durationSeconds / 60} min session",
+                            text  = "${if (isIdle) selectedMinutes else uiState.durationSeconds / 60} min session",
                             style = MaterialTheme.typography.labelSmall,
                             color = DimTan
                         )
@@ -221,7 +356,7 @@ fun FocusTimerScreen(
 
             // ── Duration picker (only shown when idle) ───────────────────────
             AnimatedVisibility(
-                visible = !uiState.isRunning && !uiState.isPaused && !uiState.isCompleted,
+                visible = isIdle,
                 enter   = fadeIn() + expandVertically(),
                 exit    = fadeOut() + shrinkVertically()
             ) {
@@ -237,7 +372,7 @@ fun FocusTimerScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        DURATION_OPTIONS.forEach { mins ->
+                        PRESET_DURATIONS.forEach { mins ->
                             val isActive = mins == selectedMinutes
                             Surface(
                                 onClick       = { selectedMinutes = mins },
@@ -258,6 +393,28 @@ fun FocusTimerScreen(
                                     modifier   = Modifier.padding(vertical = 10.dp)
                                 )
                             }
+                        }
+
+                        // Custom duration button
+                        val isCustomActive = selectedMinutes !in PRESET_DURATIONS
+                        Surface(
+                            onClick       = { showCustomDialog = true },
+                            color         = if (isCustomActive) MossGreenDim else CozyBlack2,
+                            shape         = RoundedCornerShape(10.dp),
+                            border        = BorderStroke(
+                                if (isCustomActive) 1.5.dp else 1.dp,
+                                if (isCustomActive) MossGreen else CozyBorder
+                            ),
+                            modifier      = Modifier.weight(1.3f)
+                        ) {
+                            Text(
+                                if (isCustomActive) "${selectedMinutes}m ✎" else "Custom",
+                                style     = MaterialTheme.typography.labelMedium,
+                                color     = if (isCustomActive) MossGreen else SoftTan,
+                                fontWeight = if (isCustomActive) FontWeight.Bold else FontWeight.Normal,
+                                textAlign  = TextAlign.Center,
+                                modifier   = Modifier.padding(vertical = 10.dp)
+                            )
                         }
                     }
                     Spacer(Modifier.height(24.dp))
@@ -280,7 +437,7 @@ fun FocusTimerScreen(
                     }
                 }
 
-                !uiState.isRunning && !uiState.isPaused -> {
+                isIdle -> {
                     Button(
                         onClick  = { viewModel.startTimer(selectedMinutes) },
                         colors   = ButtonDefaults.buttonColors(

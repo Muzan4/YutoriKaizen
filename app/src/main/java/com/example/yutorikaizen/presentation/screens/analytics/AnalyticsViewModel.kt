@@ -2,6 +2,7 @@ package com.example.yutorikaizen.presentation.screens.analytics
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.yutorikaizen.data.local.SkinPreferences
 import com.example.yutorikaizen.data.local.UsageTracker
 import com.example.yutorikaizen.domain.model.AppUsage
 import com.example.yutorikaizen.data.local.entity.DailyCheckInEntity
@@ -43,7 +44,8 @@ class AnalyticsViewModel @Inject constructor(
     private val surgeEventRepository: SurgeEventRepository,
     private val nciCalculator: NciCalculator,
     private val appUsageRepository: AppUsageRepository,
-    private val usageTracker: UsageTracker
+    private val usageTracker: UsageTracker,
+    private val skinPreferences: SkinPreferences
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AnalyticsUiState())
@@ -55,9 +57,10 @@ class AnalyticsViewModel @Inject constructor(
         viewModelScope.launch {
             combine(
                 triggerLogRepository.observeAll(),
-                dailyCheckInRepository.observeLast14Days()
-            ) { logs, checkIns -> Pair(logs, checkIns) }
-                .collect { (logs, checkIns) ->
+                dailyCheckInRepository.observeLast14Days(),
+                skinPreferences.targetScreenTimeMinutes
+            ) { logs, checkIns, targetMinutes -> Triple(logs, checkIns, targetMinutes) }
+                .collect { (logs, checkIns, targetMinutes) ->
 
                     val freq = logs
                         .groupBy { it.emotion.uppercase() }
@@ -140,16 +143,38 @@ class AnalyticsViewModel @Inject constructor(
                         
                         val averageScreenTimeMinutes = if (count7Days > 0) total7Days / count7Days else 0
                         
-                        val screenTimeTrend = when {
-                            totalScreenTimeMinutes > averageScreenTimeMinutes * 1.1 -> ScreenTimeTrend.UP
-                            totalScreenTimeMinutes < averageScreenTimeMinutes * 0.9 -> ScreenTimeTrend.DOWN
-                            else -> ScreenTimeTrend.STABLE
-                        }
-                        
-                        val recommendation = when (screenTimeTrend) {
-                            ScreenTimeTrend.UP -> "Your screen time is up today. Try a short digital detox."
-                            ScreenTimeTrend.DOWN -> "Great job keeping screen time below average!"
-                            ScreenTimeTrend.STABLE -> "Your screen time is stable. Keep it up."
+                        val (screenTimeTrend, recommendation) = if (targetMinutes == null) {
+                            Pair(
+                                ScreenTimeTrend.NOT_SET,
+                                "You haven't set a daily screen time goal yet. Set a target to track whether you're staying under your limit."
+                            )
+                        } else {
+                            val targetH = targetMinutes / 60
+                            val targetM = targetMinutes % 60
+                            val targetStr = if (targetH > 0 && targetM > 0) "${targetH}h ${targetM}m" else if (targetH > 0) "${targetH}h" else "${targetM}m"
+
+                            if (totalScreenTimeMinutes > targetMinutes) {
+                                val overM = totalScreenTimeMinutes - targetMinutes
+                                val overStr = if (overM >= 60) "${overM / 60}h ${overM % 60}m" else "${overM}m"
+                                Pair(
+                                    ScreenTimeTrend.UP,
+                                    "Your screen time is up by $overStr over your $targetStr goal today. Try a short digital detox."
+                                )
+                            } else if (totalScreenTimeMinutes >= (targetMinutes * 0.85f).toInt()) {
+                                val remM = (targetMinutes - totalScreenTimeMinutes).coerceAtLeast(0)
+                                val remStr = if (remM >= 60) "${remM / 60}h ${remM % 60}m" else "${remM}m"
+                                Pair(
+                                    ScreenTimeTrend.STABLE,
+                                    "Approaching your daily limit of $targetStr ($remStr remaining today). Consider wrapping up."
+                                )
+                            } else {
+                                val remM = targetMinutes - totalScreenTimeMinutes
+                                val remStr = if (remM >= 60) "${remM / 60}h ${remM % 60}m" else "${remM}m"
+                                Pair(
+                                    ScreenTimeTrend.DOWN,
+                                    "Great job! You have $remStr remaining under your daily $targetStr screen time goal."
+                                )
+                            }
                         }
                         
                         usageInsight = UsageInsight(
@@ -158,7 +183,8 @@ class AnalyticsViewModel @Inject constructor(
                             screenTimeTrend = screenTimeTrend,
                             topApps = topApps,
                             dailyTrend = dailyTrend,
-                            recommendation = recommendation
+                            recommendation = recommendation,
+                            targetScreenTimeMinutes = targetMinutes
                         )
                     }
 
@@ -177,6 +203,12 @@ class AnalyticsViewModel @Inject constructor(
                         )
                     }
                 }
+        }
+    }
+
+    fun setTargetScreenTime(minutes: Int) {
+        viewModelScope.launch {
+            skinPreferences.setTargetScreenTimeMinutes(minutes)
         }
     }
 

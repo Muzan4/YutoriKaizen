@@ -2,8 +2,10 @@ package com.example.yutorikaizen.presentation.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.yutorikaizen.data.local.SkinPreferences
 import com.example.yutorikaizen.domain.model.*
 import com.example.yutorikaizen.domain.repository.DailyCheckInRepository
+import com.example.yutorikaizen.domain.repository.HabitRepository
 import com.example.yutorikaizen.domain.repository.SurgeEventRepository
 import com.example.yutorikaizen.domain.repository.UserProfileRepository
 import com.example.yutorikaizen.domain.usecase.CurrentPhaseUseCase
@@ -11,11 +13,9 @@ import com.example.yutorikaizen.domain.usecase.NciCalculator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import org.json.JSONArray
+import java.time.LocalDate
 import java.time.LocalTime
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
-import com.example.yutorikaizen.data.local.SkinPreferences
 
 data class HomeUiState(
     val greeting: String = "Welcome back",
@@ -32,6 +32,14 @@ data class HomeUiState(
     val hasSeenRibiIntro: Boolean = false
 )
 
+private data class HomeDataBundle(
+    val profile: UserProfile?,
+    val day: Int,
+    val activeHabits: List<Habit>,
+    val todayLogs: List<HabitLog>,
+    val checkIns: List<DailyCheckIn>
+)
+
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val userProfileRepository: UserProfileRepository,
@@ -39,7 +47,8 @@ class HomeViewModel @Inject constructor(
     private val surgeEventRepository: SurgeEventRepository,
     private val currentPhaseUseCase: CurrentPhaseUseCase,
     private val nciCalculator: NciCalculator,
-    private val skinPreferences: SkinPreferences
+    private val skinPreferences: SkinPreferences,
+    private val habitRepository: HabitRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -56,85 +65,114 @@ class HomeViewModel @Inject constructor(
                 }
             }
 
+            val todayEpochDay = LocalDate.now().toEpochDay()
+
             combine(
                 userProfileRepository.observeProfile(),
-                skinPreferences.currentJourneyDay
-            ) { profile, day -> Pair(profile, day) }
-                .collect { (profile, day) ->
-                    if (profile == null || !profile.onboardingComplete) {
-                        _uiState.update {
-                            it.copy(
-                                onboardingComplete = false,
-                                isLoading = false,
-                                dayNumber = 1,
-                                currentPhase = null,
-                                program = null,
-                                nciScore = 0f,
-                                currentStreak = 0,
-                                habitsCompletedToday = 0,
-                                totalHabitsToday = 0
-                            )
-                        }
-                        return@collect
-                    }
+                skinPreferences.currentJourneyDay,
+                habitRepository.observeActiveHabits(),
+                habitRepository.observeLogsForDay(todayEpochDay),
+                dailyCheckInRepository.observeLast14Days()
+            ) { profile, day, activeHabits, todayLogs, checkIns ->
+                HomeDataBundle(profile, day, activeHabits, todayLogs, checkIns)
+            }.collect { bundle ->
+                val profile = bundle.profile
+                val activeHabits = bundle.activeHabits
+                val todayLogs = bundle.todayLogs
+                val checkIns = bundle.checkIns
 
-                    val journeyState = currentPhaseUseCase.execute(day, profile.difficultyLevel)
-                    val program      = DopaminePrograms.byId(profile.selectedProgramId)
-
-                    // Today's check-in
-                    val todayCheckIn     = dailyCheckInRepository.getForToday()
-                    val completedHabits  = todayCheckIn?.completedHabitIds?.size ?: 0
-                    val totalHabits      = journeyState.currentPhase.habits.size
-
-                    // Streak
-                    val allCheckIns = dailyCheckInRepository.getAll()
-                    var streak      = 0
-                    for (ci in allCheckIns.reversed()) {
-                        if (ci.nciScore >= 0.5f) streak++ else break
-                    }
-
-                    // NCI
-                    val since14         = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(14)
-                    val surgeEvents     = surgeEventRepository.getEventsSince(since14)
-                    val checkIns14      = allCheckIns.takeLast(14)
-
-                    val checkInEntities = checkIns14.map { ci ->
-                        com.example.yutorikaizen.data.local.entity.DailyCheckInEntity(
-                            id                = ci.id,
-                            epochDay          = ci.epochDay,
-                            phaseNumber       = ci.phaseNumber,
-                            completedHabitIds = JSONArray(ci.completedHabitIds).toString(),
-                            focusMinutes      = ci.focusMinutes,
-                            nciScore          = ci.nciScore
-                        )
-                    }
-                    val surgeEntities = surgeEvents.map { se ->
-                        com.example.yutorikaizen.data.local.entity.SurgeEventEntity(
-                            id              = se.id,
-                            timestamp       = se.timestamp,
-                            durationSeconds = se.durationSeconds,
-                            outcome         = se.outcome.name,
-                            methodUsed      = se.methodUsed.name,
-                            emotionLogged   = se.emotionLogged
-                        )
-                    }
-                    val nci = nciCalculator.calculate(checkInEntities, surgeEntities, totalHabits)
-
+                if (profile == null || !profile.onboardingComplete) {
                     _uiState.update {
                         it.copy(
-                            greeting             = buildGreeting(day),
-                            dayNumber            = day,
-                            currentPhase         = journeyState.currentPhase,
-                            program              = program,
-                            nciScore             = nci,
-                            currentStreak        = streak,
-                            habitsCompletedToday = completedHabits,
-                            totalHabitsToday     = totalHabits,
-                            onboardingComplete   = true,
-                            isLoading            = false
+                            onboardingComplete = false,
+                            isLoading = false,
+                            dayNumber = 1,
+                            currentPhase = null,
+                            program = null,
+                            nciScore = 0f,
+                            currentStreak = 0,
+                            habitsCompletedToday = 0,
+                            totalHabitsToday = 0
                         )
                     }
+                    return@collect
                 }
+
+                val day = if (profile.startDate > 0L) {
+                    currentPhaseUseCase.calculateDayNumber(profile.startDate)
+                } else {
+                    bundle.day
+                }
+                if (bundle.day != day) {
+                    skinPreferences.setCurrentJourneyDay(day)
+                }
+
+                val journeyState = currentPhaseUseCase.execute(day, profile.difficultyLevel)
+                val program      = DopaminePrograms.byId(profile.selectedProgramId)
+
+                // Today's check-in
+                val todayCheckIn = checkIns.firstOrNull { it.epochDay == todayEpochDay }
+                    ?: dailyCheckInRepository.getForToday()
+                val completedJourneyHabits = todayCheckIn?.completedHabitIds?.size ?: 0
+                val totalJourneyHabits = journeyState.currentPhase.habits.size
+
+                // Self-made custom habits
+                val todayLogMap = todayLogs.associateBy { it.habitId }
+                val completedCustomHabits = activeHabits.count { habit ->
+                    val log = todayLogMap[habit.id]
+                    log != null && log.completedCount >= habit.targetCount
+                }
+                val totalCustomHabits = activeHabits.size
+
+                val totalHabitsCompletedToday = completedJourneyHabits + completedCustomHabits
+                val totalHabitsToday = totalJourneyHabits + totalCustomHabits
+                val focusMinutes = todayCheckIn?.focusMinutes ?: 0
+
+                val dailyScore = nciCalculator.calculateDailyScore(
+                    completedJourneyHabits = completedJourneyHabits,
+                    totalJourneyHabits = totalJourneyHabits,
+                    completedCustomHabits = completedCustomHabits,
+                    totalCustomHabits = totalCustomHabits,
+                    focusMinutes = focusMinutes,
+                    phaseNumber = journeyState.currentPhase.number
+                )
+
+                // Streak
+                var streak = 0
+                for (ci in checkIns.sortedByDescending { it.epochDay }) {
+                    val score = if (ci.epochDay == todayEpochDay) dailyScore else ci.nciScore
+                    if (score >= 0.5f) streak++ else break
+                }
+
+                // Keep today's daily check in record updated with the new Daily Score
+                if (todayCheckIn == null || todayCheckIn.nciScore != dailyScore) {
+                    dailyCheckInRepository.upsert(
+                        DailyCheckIn(
+                            id = todayCheckIn?.id ?: 0,
+                            epochDay = todayEpochDay,
+                            phaseNumber = journeyState.currentPhase.number,
+                            completedHabitIds = todayCheckIn?.completedHabitIds ?: emptyList(),
+                            focusMinutes = focusMinutes,
+                            nciScore = dailyScore
+                        )
+                    )
+                }
+
+                _uiState.update {
+                    it.copy(
+                        greeting             = buildGreeting(day),
+                        dayNumber            = day,
+                        currentPhase         = journeyState.currentPhase,
+                        program              = program,
+                        nciScore             = dailyScore,
+                        currentStreak        = streak,
+                        habitsCompletedToday = totalHabitsCompletedToday,
+                        totalHabitsToday     = totalHabitsToday,
+                        onboardingComplete   = true,
+                        isLoading            = false
+                    )
+                }
+            }
         }
     }
 

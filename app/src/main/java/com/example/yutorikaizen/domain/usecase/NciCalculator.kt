@@ -5,48 +5,88 @@ import com.example.yutorikaizen.data.local.entity.SurgeEventEntity
 import javax.inject.Inject
 
 /**
- * Calculates the Neuro-Consistency Index (NCI) — a rolling score 0f..1f
- * representing the user's habit consistency over the last 14 days.
+ * Calculates the Daily Score (0f..1f) representing daily performance.
  *
  * Formula:
- *  NCI = (0.4 × habit_ratio) + (0.35 × surge_resist_ratio) + (0.25 × focus_ratio)
+ *  Daily Score = (0.75 × habit_ratio) + (0.25 × focus_ratio)
  *
  * where:
- *  habit_ratio        = completed habits / total expected habits (14-day window)
- *  surge_resist_ratio = resisted surges / total surges (14-day window)
- *  focus_ratio        = days with ≥ 15 min focus / 14
+ *  habit_ratio = completed habits / total expected habits
+ *                (tracks both self-made habits and journey section habits)
+ *  focus_ratio = completed focus minutes / required focus minutes
+ *                (starts at 25 min in Phase 1, gradually increasing throughout the journey:
+ *                 Phase 1: 25 min, Phase 2: 30 min, Phase 3: 35 min, Phase 4+: 40 min)
+ *
+ * No urges are tracked for this score.
  */
 class NciCalculator @Inject constructor() {
 
+    /**
+     * Calculates the Daily Score for a single day based on habits and deep focus.
+     */
+    fun calculateDailyScore(
+        completedJourneyHabits: Int,
+        totalJourneyHabits: Int,
+        completedCustomHabits: Int = 0,
+        totalCustomHabits: Int = 0,
+        focusMinutes: Int = 0,
+        phaseNumber: Int = 1
+    ): Float {
+        val totalHabits = totalJourneyHabits + totalCustomHabits
+        val completedHabits = completedJourneyHabits + completedCustomHabits
+
+        val habitRatio = if (totalHabits > 0) {
+            (completedHabits.toFloat() / totalHabits).coerceIn(0f, 1f)
+        } else 0f
+
+        val requiredFocus = requiredFocusMinutes(phaseNumber)
+        val focusRatio = if (requiredFocus > 0) {
+            (focusMinutes.toFloat() / requiredFocus).coerceIn(0f, 1f)
+        } else 0f
+
+        return ((0.75f * habitRatio) + (0.25f * focusRatio)).coerceIn(0f, 1f)
+    }
+
+    /**
+     * Required deep focus minutes by journey phase:
+     * Phase 1: 25 minutes
+     * Phase 2: 30 minutes
+     * Phase 3: 35 minutes
+     * Phase 4+: 40 minutes
+     */
+    fun requiredFocusMinutes(phaseNumber: Int): Int = when (phaseNumber) {
+        1 -> 25
+        2 -> 30
+        3 -> 35
+        else -> 40
+    }
+
+    /**
+     * Rolling score over a list of daily check-ins.
+     * Surge events are ignored (no urges).
+     */
     fun calculate(
         checkIns: List<DailyCheckInEntity>,
-        surgeEvents: List<SurgeEventEntity>,
+        surgeEvents: List<SurgeEventEntity> = emptyList(),
         expectedHabitsPerDay: Int = 4
     ): Float {
         if (checkIns.isEmpty()) return 0f
 
-        val days = checkIns.size.coerceAtLeast(1)
-
-        // 1. Habit completion ratio
-        val totalCompletedHabits = checkIns.sumOf { parseHabitCount(it.completedHabitIds) }
-        val totalExpectedHabits  = days * expectedHabitsPerDay
-        val habitRatio           = (totalCompletedHabits.toFloat() / totalExpectedHabits).coerceIn(0f, 1f)
-
-        // 2. Surge resistance ratio
-        val totalSurges   = surgeEvents.size
-        val resistedSurges = surgeEvents.count { it.outcome == "RESISTED" }
-        val surgeRatio    = if (totalSurges == 0) 0.8f  // no surges = assumed controlled
-                            else (resistedSurges.toFloat() / totalSurges).coerceIn(0f, 1f)
-
-        // 3. Focus ratio: days with >= 15 min focus
-        val goodFocusDays = checkIns.count { it.focusMinutes >= 15 }
-        val focusRatio    = (goodFocusDays.toFloat() / days).coerceIn(0f, 1f)
-
-        return (0.40f * habitRatio) + (0.35f * surgeRatio) + (0.25f * focusRatio)
+        val scores = checkIns.map { ci ->
+            if (ci.nciScore > 0f) {
+                ci.nciScore
+            } else {
+                val completedHabits = parseHabitCount(ci.completedHabitIds)
+                val habitRatio = (completedHabits.toFloat() / expectedHabitsPerDay.coerceAtLeast(1)).coerceIn(0f, 1f)
+                val requiredFocus = requiredFocusMinutes(ci.phaseNumber)
+                val focusRatio = (ci.focusMinutes.toFloat() / requiredFocus).coerceIn(0f, 1f)
+                ((0.75f * habitRatio) + (0.25f * focusRatio)).coerceIn(0f, 1f)
+            }
+        }
+        return (scores.sum() / scores.size).coerceIn(0f, 1f)
     }
 
     private fun parseHabitCount(json: String): Int {
-        // Simple count: count comma-separated items in JSON array
         if (json.isBlank() || json == "[]") return 0
         return json.count { it == '"' } / 2
     }

@@ -65,7 +65,16 @@ class DailyGoalViewModel @Inject constructor(
                 userProfileRepository.observeProfile(),
                 skinPreferences.currentJourneyDay
             ) { profile, day -> Pair(profile, day) }
-                .collect { (profile, day) ->
+                .collect { (profile, rawDay) ->
+                    val day = if (profile != null && profile.startDate > 0L) {
+                        currentPhaseUseCase.calculateDayNumber(profile.startDate)
+                    } else {
+                        rawDay
+                    }
+                    if (rawDay != day) {
+                        skinPreferences.setCurrentJourneyDay(day)
+                    }
+
                     val dateLabel = today.format(
                         DateTimeFormatter.ofPattern("EEEE, MMMM d", Locale.getDefault())
                     )

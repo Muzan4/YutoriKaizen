@@ -30,12 +30,19 @@ import com.example.yutorikaizen.domain.model.DopamineProgram
 import com.example.yutorikaizen.domain.model.WeeklyFocus
 import com.example.yutorikaizen.presentation.theme.*
 
+private data class TriggerOption(
+    val key: String,
+    val label: String,
+    val description: String,
+    val icon: ImageVector
+)
+
 private val TRIGGER_OPTIONS = listOf(
-    "BOREDOM"  to "Boredom",
-    "ANXIETY"  to "Anxiety",
-    "LONELY"   to "Loneliness",
-    "FATIGUE"  to "Exhaustion",
-    "AVOIDING" to "Avoidance"
+    TriggerOption("BOREDOM", "Boredom", "Nothing interesting is happening", Icons.Rounded.HourglassEmpty),
+    TriggerOption("ANXIETY", "Anxiety", "Something is making me uncomfortable", Icons.Rounded.Waves),
+    TriggerOption("LONELY", "Loneliness", "I want some kind of connection", Icons.Rounded.PersonOutline),
+    TriggerOption("FATIGUE", "Exhaustion", "I'm tired and I want to zone out", Icons.Rounded.Bedtime),
+    TriggerOption("AVOIDING", "Avoidance", "There's something I don't want to do", Icons.Rounded.VisibilityOff)
 )
 
 @Composable
@@ -453,7 +460,7 @@ private fun ProgramCard(
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
-            // Header row: emoji + name + duration badge
+            // Header row: icon + name + duration badge
             Row(
                 verticalAlignment     = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -467,7 +474,12 @@ private fun ProgramCard(
                             RoundedCornerShape(12.dp)
                         )
                 ) {
-                    Text(program.emoji, fontSize = 20.sp)
+                    Icon(
+                        imageVector = programIcon(program.id),
+                        contentDescription = null,
+                        tint = if (isSelected) MossGreen else CreamWhite,
+                        modifier = Modifier.size(22.dp)
+                    )
                 }
 
                 Column(modifier = Modifier.weight(1f)) {
@@ -553,9 +565,14 @@ private fun WeekFocusPill(focus: WeeklyFocus, isSelected: Boolean) {
         Row(
             modifier              = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
             verticalAlignment     = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(3.dp)
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text(focus.emoji, fontSize = 10.sp)
+            Icon(
+                imageVector = focusThemeIcon(focus.theme),
+                contentDescription = null,
+                tint = if (isSelected) MossGreen else SoftTan.copy(alpha = 0.85f),
+                modifier = Modifier.size(11.dp)
+            )
             Text(
                 focus.theme,
                 style    = MaterialTheme.typography.labelSmall,
@@ -662,7 +679,12 @@ private fun DifficultyCard(
                     .size(48.dp)
                     .background(accentColor.copy(alpha = if (isSelected) 0.2f else 0.1f), RoundedCornerShape(12.dp))
             ) {
-                Text(level.emoji, fontSize = 24.sp)
+                Icon(
+                    imageVector = difficultyIcon(level),
+                    contentDescription = null,
+                    tint = accentColor,
+                    modifier = Modifier.size(24.dp)
+                )
             }
 
             Column(modifier = Modifier.weight(1f)) {
@@ -738,73 +760,172 @@ private fun TriggersStep(
         )
         Spacer(Modifier.height(24.dp))
 
-        val triggerDescriptions = mapOf(
-            "BOREDOM"  to "Nothing interesting is happening",
-            "ANXIETY"  to "Something is making me uncomfortable",
-            "LONELY"   to "I want some kind of connection",
-            "FATIGUE"  to "I'm tired and I want to zone out",
-            "AVOIDING" to "There's something I don't want to do"
-        )
-
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            TRIGGER_OPTIONS.forEach { (key, label) ->
-                val isSelected = key in selectedTriggers
+        Column(
+            modifier            = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            TRIGGER_OPTIONS.forEach { option ->
+                val isSelected = option.key in selectedTriggers
                 val bgColor by animateColorAsState(
                     targetValue   = if (isSelected) MossGreenDim else CozyBlack2,
                     animationSpec = tween(200),
-                    label         = "trigger_bg_$key"
+                    label         = "trigger_bg_${option.key}"
                 )
                 val borderColor by animateColorAsState(
                     targetValue   = if (isSelected) MossGreen else CozyBorder,
                     animationSpec = tween(200),
-                    label         = "trigger_border_$key"
+                    label         = "trigger_border_${option.key}"
+                )
+                val iconBgColor by animateColorAsState(
+                    targetValue   = if (isSelected) MossGreen.copy(alpha = 0.2f) else CozyBlack3,
+                    animationSpec = tween(200),
+                    label         = "trigger_icon_bg_${option.key}"
+                )
+                val iconTint by animateColorAsState(
+                    targetValue   = if (isSelected) MossGreen else SoftTan,
+                    animationSpec = tween(200),
+                    label         = "trigger_icon_tint_${option.key}"
                 )
 
                 Card(
-                    onClick  = { onToggle(key) },
+                    onClick  = { onToggle(option.key) },
                     shape    = RoundedCornerShape(16.dp),
                     border   = BorderStroke(if (isSelected) 1.5.dp else 1.dp, borderColor),
                     colors   = CardDefaults.cardColors(containerColor = bgColor),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
-                        modifier              = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
+                        modifier              = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
                         verticalAlignment     = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        // Checkbox
+                        // Visual Icon
                         Box(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier
-                                .size(22.dp)
-                                .background(
-                                    if (isSelected) MossGreen else Color.Transparent,
-                                    CircleShape
-                                )
-                                .border(1.5.dp, if (isSelected) MossGreen else CozyBorder.copy(alpha = 0.6f), CircleShape)
+                                .size(42.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(iconBgColor)
                         ) {
-                            if (isSelected) {
-                                Text("✓", color = CozyBlack, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold)
-                            }
+                            Icon(
+                                imageVector = option.icon,
+                                contentDescription = null,
+                                tint = iconTint,
+                                modifier = Modifier.size(22.dp)
+                            )
                         }
 
+                        // Title & Description
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                label,
+                                option.label,
                                 style      = MaterialTheme.typography.labelLarge,
                                 color      = if (isSelected) MossGreen else CreamWhite,
                                 fontWeight = FontWeight.SemiBold
                             )
+                            Spacer(Modifier.height(2.dp))
                             Text(
-                                triggerDescriptions[key] ?: "",
+                                option.description,
                                 style    = MaterialTheme.typography.labelSmall,
-                                color    = if (isSelected) MossGreen.copy(alpha = 0.7f) else DimTan,
+                                color    = if (isSelected) WarmCream.copy(alpha = 0.85f) else SoftTan,
                                 lineHeight = 15.sp
                             )
+                        }
+
+                        // Selection Checkbox
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(CircleShape)
+                                .background(if (isSelected) MossGreen else Color.Transparent)
+                                .border(
+                                    1.5.dp,
+                                    if (isSelected) MossGreen else CozyBorder.copy(alpha = 0.7f),
+                                    CircleShape
+                                )
+                        ) {
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Check,
+                                    contentDescription = null,
+                                    tint = CozyBlack,
+                                    modifier = Modifier.size(15.dp)
+                                )
+                            }
                         }
                     }
                 }
             }
         }
     }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Icon Resolvers (clean vector replacements for emojis)
+// ─────────────────────────────────────────────────────────────────────────────
+private fun programIcon(programId: String): ImageVector = when (programId) {
+    "scroll_reset"            -> Icons.Rounded.Smartphone
+    "autonomic_regulation"    -> Icons.Rounded.SelfImprovement
+    "dopamine_downregulation" -> Icons.Rounded.Tune
+    "circadian_restoration"   -> Icons.Rounded.Bedtime
+    "stimulus_threshold"      -> Icons.Rounded.CenterFocusStrong
+    "full_rewire"             -> Icons.Rounded.AutoAwesome
+    "kaizen_growth"           -> Icons.Rounded.TrendingUp
+    else                      -> Icons.Rounded.TrackChanges
+}
+
+private fun difficultyIcon(level: DifficultyLevel): ImageVector = when (level) {
+    DifficultyLevel.GENTLE     -> Icons.Rounded.Spa
+    DifficultyLevel.CHALLENGER -> Icons.Rounded.Whatshot
+    DifficultyLevel.HARD       -> Icons.Rounded.Bolt
+}
+
+private fun focusThemeIcon(theme: String): ImageVector = when (theme.lowercase().trim()) {
+    "analog"                 -> Icons.Rounded.Edit
+    "awareness"              -> Icons.Rounded.Visibility
+    "balance"                -> Icons.Rounded.Balance
+    "body"                   -> Icons.Rounded.Accessibility
+    "boredom"                -> Icons.Rounded.HourglassBottom
+    "breath"                 -> Icons.Rounded.Air
+    "caffeine"               -> Icons.Rounded.LocalCafe
+    "connection"             -> Icons.Rounded.PeopleOutline
+    "consistency"            -> Icons.Rounded.CheckCircleOutline
+    "creation"               -> Icons.Rounded.Brush
+    "deep work"              -> Icons.Rounded.Psychology
+    "effort"                 -> Icons.Rounded.FitnessCenter
+    "embarrassingly small"   -> Icons.Rounded.Adjust
+    "environment"            -> Icons.Rounded.Home
+    "evening wind-down"      -> Icons.Rounded.Bedtime
+    "fasting"                -> Icons.Rounded.HourglassEmpty
+    "flow state"             -> Icons.Rounded.Waves
+    "focus"                  -> Icons.Rounded.CenterFocusStrong
+    "foundation"             -> Icons.Rounded.Architecture
+    "friction"               -> Icons.Rounded.Shield
+    "habit stacking"         -> Icons.Rounded.Layers
+    "identity"               -> Icons.Rounded.Fingerprint
+    "integration"            -> Icons.Rounded.Sync
+    "light", "morning light" -> Icons.Rounded.WbSunny
+    "maintenance"            -> Icons.Rounded.Build
+    "mastery"                -> Icons.Rounded.MilitaryTech
+    "meal timing"            -> Icons.Rounded.Restaurant
+    "nature"                 -> Icons.Rounded.Park
+    "reading"                -> Icons.Rounded.MenuBook
+    "recovery"               -> Icons.Rounded.BatteryChargingFull
+    "regulation"             -> Icons.Rounded.Tune
+    "replacement"            -> Icons.Rounded.SwapHoriz
+    "resilience"             -> Icons.Rounded.Shield
+    "savoring"               -> Icons.Rounded.FavoriteBorder
+    "single-tasking"         -> Icons.Rounded.Filter1
+    "sound"                  -> Icons.Rounded.GraphicEq
+    "stillness"              -> Icons.Rounded.PauseCircle
+    "task initiation"        -> Icons.Rounded.PlayArrow
+    "temperature"            -> Icons.Rounded.Thermostat
+    "the 1% compounder"      -> Icons.Rounded.TrendingUp
+    "the unbroken chain"     -> Icons.Rounded.Link
+    "time blocking"          -> Icons.Rounded.Schedule
+    "visual focus"           -> Icons.Rounded.CenterFocusStrong
+    else                     -> Icons.Rounded.Adjust
 }

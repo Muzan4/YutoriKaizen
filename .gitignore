@@ -33,3 +33,7 @@ google-services.json
 website/node_modules/
 website/dist/
 build_errors.txt
+
+# Release binaries
+app/release/
+*.apk

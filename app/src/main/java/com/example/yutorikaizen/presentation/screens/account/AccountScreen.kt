@@ -12,6 +12,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -40,6 +42,8 @@ import com.example.yutorikaizen.presentation.theme.*
 import com.example.yutorikaizen.presentation.components.tourTarget
 import com.example.yutorikaizen.service.CatOverlayPreferences
 import com.example.yutorikaizen.service.CatOverlayService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
 @Composable
@@ -199,6 +203,10 @@ fun AccountScreen(
                         .getBoolean("cat_service_active", false)
                 )
             }
+            var showExcludeAppsSheet by remember { mutableStateOf(false) }
+            var excludedPackages by remember {
+                mutableStateOf(CatOverlayPreferences.getExcludedPackages(context))
+            }
 
             SettingsSection(
                 usageTrackingEnabled = uiState.usageTrackingEnabled,
@@ -233,8 +241,21 @@ fun AccountScreen(
                     } else {
                         CatOverlayService.stop(context)
                     }
-                }
+                },
+                excludedAppsCount = excludedPackages.size,
+                onExcludeAppsClick = { showExcludeAppsSheet = true }
             )
+
+            if (showExcludeAppsSheet) {
+                ExcludeOverlayAppsSheet(
+                    excludedPackages = excludedPackages,
+                    onExcludedPackagesChange = { updated ->
+                        excludedPackages = updated
+                        CatOverlayPreferences.setExcludedPackages(context, updated)
+                    },
+                    onDismiss = { showExcludeAppsSheet = false }
+                )
+            }
 
             Spacer(Modifier.height(24.dp))
 
@@ -443,7 +464,7 @@ private fun ProfileHeaderCard(
                         )
                     }
                     Spacer(Modifier.height(4.dp))
-                    Text("NCI", style = MaterialTheme.typography.labelSmall, color = SoftTan)
+                    Text("Score", style = MaterialTheme.typography.labelSmall, color = SoftTan)
                 }
 
                 // Streak
@@ -549,7 +570,9 @@ private fun SettingsSection(
     notificationsEnabled: Boolean,
     onNotificationsToggle: (Boolean) -> Unit,
     catOverlayActive: Boolean,
-    onCatOverlayToggle: (Boolean) -> Unit
+    onCatOverlayToggle: (Boolean) -> Unit,
+    excludedAppsCount: Int,
+    onExcludeAppsClick: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
@@ -590,8 +613,75 @@ private fun SettingsSection(
                     checked = catOverlayActive,
                     onCheckedChange = onCatOverlayToggle
                 )
+                Divider(color = CozyBlack3, thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
+                SettingClickableRow(
+                    title = "Exclude Apps from Overlay",
+                    subtitle = if (excludedAppsCount > 0) "$excludedAppsCount app(s) excluded (e.g. Google Pay)" else "Hide cat overlay on Google Pay & banking apps",
+                    icon = Icons.Rounded.Shield,
+                    badge = if (excludedAppsCount > 0) "$excludedAppsCount" else null,
+                    onClick = onExcludeAppsClick
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun SettingClickableRow(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    badge: String? = null,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icon, contentDescription = null, tint = MossGreen, modifier = Modifier.size(22.dp))
+        Spacer(Modifier.width(16.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = CreamWhite,
+                    fontWeight = FontWeight.Medium
+                )
+                if (badge != null) {
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = MossGreen.copy(alpha = 0.15f)
+                    ) {
+                        Text(
+                            text = badge,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MossGreen,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = SoftTan
+            )
+        }
+        Icon(
+            Icons.Rounded.ChevronRight,
+            contentDescription = null,
+            tint = SoftTan,
+            modifier = Modifier.size(20.dp)
+        )
     }
 }
 
@@ -693,6 +783,300 @@ private fun DangerZoneSection(
                     Text("Deletes check-ins, habits, and reset to day 1", style = MaterialTheme.typography.labelSmall, color = SoftTan)
                 }
             }
+        }
+    }
+}
+
+private data class OverlayAppItem(
+    val packageName: String,
+    val label: String,
+    val isPayment: Boolean
+)
+
+private fun isPaymentOrBankingApp(packageName: String, label: String): Boolean {
+    val pkg = packageName.lowercase()
+    val lbl = label.lowercase()
+    val paymentKeywords = listOf(
+        "pay", "bank", "wallet", "paisa", "upi", "tez", "phonepe", "paytm",
+        "cred", "bhim", "yono", "gpay", "google pay", "money"
+    )
+    return paymentKeywords.any { pkg.contains(it) || lbl.contains(it) } ||
+        CatOverlayPreferences.DEFAULT_EXCLUDED_PACKAGES.contains(packageName)
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ExcludeOverlayAppsSheet(
+    excludedPackages: Set<String>,
+    onExcludedPackagesChange: (Set<String>) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var searchQuery by remember { mutableStateOf("") }
+    var installedApps by remember { mutableStateOf<List<OverlayAppItem>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) {
+            val pm = context.packageManager
+            val intent = Intent(Intent.ACTION_MAIN, null).apply {
+                addCategory(Intent.CATEGORY_LAUNCHER)
+            }
+            val resolveInfos = pm.queryIntentActivities(intent, 0)
+            val myPackage = context.packageName
+
+            val apps = resolveInfos
+                .mapNotNull { resolveInfo ->
+                    val pkg = resolveInfo.activityInfo.packageName
+                    if (pkg == myPackage) return@mapNotNull null
+                    val label = resolveInfo.loadLabel(pm)?.toString() ?: pkg
+                    val isPayment = isPaymentOrBankingApp(pkg, label)
+                    OverlayAppItem(
+                        packageName = pkg,
+                        label = label,
+                        isPayment = isPayment
+                    )
+                }
+                .distinctBy { it.packageName }
+                .sortedWith(
+                    compareByDescending<OverlayAppItem> { it.isPayment || excludedPackages.contains(it.packageName) }
+                        .thenBy { it.label.lowercase() }
+                )
+
+            withContext(Dispatchers.Main) {
+                installedApps = apps
+                isLoading = false
+            }
+        }
+    }
+
+    val filteredApps = remember(searchQuery, installedApps) {
+        if (searchQuery.isBlank()) installedApps
+        else installedApps.filter {
+            it.label.contains(searchQuery, ignoreCase = true) ||
+            it.packageName.contains(searchQuery, ignoreCase = true)
+        }
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = CozyBlack2,
+        dragHandle = { BottomSheetDefaults.DragHandle(color = SoftTan) }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.85f)
+                .padding(horizontal = 20.dp)
+        ) {
+            // Header
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(MossGreen.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
+                ) {
+                    Icon(Icons.Rounded.Shield, contentDescription = null, tint = MossGreen, modifier = Modifier.size(22.dp))
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Exclude Apps from Overlay",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = CreamWhite,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "The cat overlay will hide automatically while these apps are open",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = SoftTan
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(14.dp))
+
+            // Info note
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = CozyBlack3,
+                border = BorderStroke(1.dp, CozyBorder),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Rounded.Info, contentDescription = null, tint = MossGreen, modifier = Modifier.size(18.dp))
+                    Text(
+                        text = "Recommended for Google Pay and banking apps to avoid overlay touch blocks and security prompts.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = SoftTan,
+                        lineHeight = 16.sp
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(14.dp))
+
+            // Search box
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text("Search installed apps...", color = DimTan, style = MaterialTheme.typography.bodyMedium) },
+                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = SoftTan) },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(Icons.Rounded.Close, contentDescription = "Clear", tint = SoftTan)
+                        }
+                    }
+                },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MossGreen,
+                    unfocusedBorderColor = CozyBorder,
+                    focusedTextColor = CreamWhite,
+                    unfocusedTextColor = CreamWhite,
+                    cursorColor = MossGreen
+                )
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            if (isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = MossGreen, modifier = Modifier.size(32.dp))
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    items(filteredApps, key = { it.packageName }) { item ->
+                        val isExcluded = excludedPackages.contains(item.packageName)
+                        ExcludeAppRow(
+                            item = item,
+                            isExcluded = isExcluded,
+                            onToggle = {
+                                val updated = if (isExcluded) {
+                                    excludedPackages - item.packageName
+                                } else {
+                                    excludedPackages + item.packageName
+                                }
+                                onExcludedPackagesChange(updated)
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            // Done button
+            Button(
+                onClick = onDismiss,
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MossGreen,
+                    contentColor = CozyBlack
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+            ) {
+                Text(
+                    text = "Done (${excludedPackages.size} excluded)",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+        }
+    }
+}
+
+@Composable
+private fun ExcludeAppRow(
+    item: OverlayAppItem,
+    isExcluded: Boolean,
+    onToggle: () -> Unit
+) {
+    Surface(
+        onClick = onToggle,
+        shape = RoundedCornerShape(14.dp),
+        color = if (isExcluded) CozyBlack3 else CozyBlack2,
+        border = BorderStroke(1.dp, if (isExcluded) MossGreen.copy(alpha = 0.5f) else CozyBorder),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = if (item.isPayment) "💳" else "📱",
+                fontSize = 22.sp,
+                modifier = Modifier.padding(end = 12.dp)
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = item.label,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = CreamWhite,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1
+                    )
+                    if (item.isPayment) {
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = MossGreen.copy(alpha = 0.15f)
+                        ) {
+                            Text(
+                                text = "Payment",
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                                color = MossGreen,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+                Text(
+                    text = item.packageName,
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                    color = DimTan,
+                    maxLines = 1
+                )
+            }
+            Switch(
+                checked = isExcluded,
+                onCheckedChange = { onToggle() },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = CreamWhite,
+                    checkedTrackColor = MossGreen,
+                    uncheckedThumbColor = DimTan,
+                    uncheckedTrackColor = CozyBlack3,
+                    uncheckedBorderColor = CozyBorder
+                )
+            )
         }
     }
 }

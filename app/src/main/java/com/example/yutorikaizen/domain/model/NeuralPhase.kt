@@ -113,7 +113,7 @@ object NeuralPhases {
     )
 
     private val phase4Habits = listOf(
-        PhaseHabit("p4_nci",      "Check your NCI score",  "Review your Neuro-Consistency Index weekly and celebrate improvements.", ""),
+        PhaseHabit("p4_nci",      "Check Daily Score",     "Review your Daily Score weekly and celebrate improvements.", ""),
         PhaseHabit("p4_identity", "Identity affirmation",  "Say aloud: I am someone who chooses presence over distraction.",         ""),
         PhaseHabit("p4_mentor",   "Share your progress",   "Tell one person about your journey or write a reflection note.",         ""),
         PhaseHabit("p4_maintain", "Maintenance log",        "Do one mindful check-in per day — even if it's a 30-second note.",     "")

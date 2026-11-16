@@ -47,15 +47,16 @@ This project is configured for continuous static deployment via Git (GitHub Page
 
 ---
 
-## ⚙️ Google Drive Download Link
+## ⚙️ GitHub Releases APK Download Link
 
-The APK download link is centrally managed in `src/App.jsx` under `GOOGLE_DRIVE_DOWNLOAD_URL`:
+The APK download link is centrally managed in `src/App.jsx` under `APK_DOWNLOAD_URL`:
 
 ```javascript
-export const GOOGLE_DRIVE_DOWNLOAD_URL = "https://drive.google.com/drive/folders/YOUR_FOLDER_ID?usp=sharing";
+export const APK_DOWNLOAD_URL = "https://github.com/Muzan4/YutoriKaizen/releases/latest";
+export const GITHUB_RELEASES_URL = "https://github.com/Muzan4/YutoriKaizen/releases";
 ```
 
-Updating this single constant propagates instantly across all download buttons, cards, and copy links across the entire portal.
+Updating this single constant propagates instantly across all download buttons, cards, and copy links across the entire portal. Whenever you create a new GitHub Release with the APK attached as `app-release.apk`, visitors will always download the latest version directly from GitHub.
 
 ---
 
