@@ -82,4 +82,4 @@ YutoriKaizen/
 
 ## 📄 License
 
-Open-source under the MIT License.
+Proprietary. All Rights Reserved. See [LICENSE](file:///c:/Users/AABID/AndroidStudioProjects/YutoriKaizen/LICENSE) for details.
